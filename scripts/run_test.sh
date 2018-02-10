@@ -6,14 +6,13 @@ cd ./workspace/$1
 make
 for file in examples/*.c;
 do
-    echo " --------------------------- RUNNING  ${filename} --------------------------- "
     filename=${file%.c}
-    echo "Testing Against: ${filename}"    
+    echo -e "\n\nTesting Against:" ${filename}    
     # ./scc < ${filename}.c > ${filename}OUT.txt 2>&1
     ./scc < ${filename}.c 2> ${filename}ERROR.txt
-    echo " --------------------------- DIFF  ${filename}.c --------------------------- "
+    echo " --------- DIFF  ${filename} "
 	diff ${filename}.err ${filename}ERROR.txt
-    echo " --------------------------- END DIFFS --------------------------- "
+    echo " --------- END   DIFFS  "
     
 done
 make clobber
