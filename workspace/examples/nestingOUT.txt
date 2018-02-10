@@ -1,0 +1,76 @@
+*****DEBUG: Creating Scope global level
+x: kind: Scalar specifier: 272 indirection: 0
+
+a: kind: Scalar specifier: 272 indirection: 0
+
+b: kind: Array specifier: 272 indirection: 1
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+f: kind: Scalar specifier: 272 indirection: 0
+
+y: kind: Scalar specifier: 272 indirection: 0
+
+Use symbol 1: Entryf
+Use symbol 2:  f: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+Use symbol 1: Entryx
+Use symbol 2:  x: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+Use symbol 1: Entryy
+Use symbol 2:  y: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+add
+eql
+*****DEBUG: Creating Scope statement level
+x: kind: Scalar specifier: 272 indirection: 0
+
+f: kind: Scalar specifier: 272 indirection: 0
+
+y: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+Use symbol 1: Entryz
+Use symbol 2:  z: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+Use symbol 1: Entryf
+Use symbol 2:  f: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+add
+Use symbol 1: Entryy
+Use symbol 2:  y: kind: Error specifier: 0 indirection: 0
+ FOUND in CURRENT scope
+add
+Use symbol 1: Entryz
+Use symbol 2:  z: kind: Error specifier: -1228475304 indirection: 32767
+ FOUND in CURRENT scope
+Use symbol 1: Entrya
+Use symbol 2:  a: kind: Error specifier: -1228475304 indirection: 32767
+ NOT found in CURRENT scope
+Use symbol 3: symbol a: kind: Error specifier: -1228475304 indirection: 32767
+ FOUND in OUTER scope
+gtn
+*****DEBUG: Creating Scope statement level
+a: kind: Scalar specifier: 259 indirection: 0
+
+Use symbol 1: Entrya
+Use symbol 2:  a: kind: Error specifier: -281007192 indirection: 32727
+ FOUND in CURRENT scope
+Use symbol 1: Entryb
+Use symbol 2:  b: kind: Error specifier: -281007192 indirection: 32727
+ NOT found in CURRENT scope
+Use symbol 3: symbol b: kind: Error specifier: -281007192 indirection: 32727
+ FOUND in OUTER scope
+index
+Use symbol 1: Entrya
+Use symbol 2:  a: kind: Error specifier: -281007192 indirection: 32727
+ FOUND in CURRENT scope
+addr
+*****DEBUG: Closing Scope statement level
+*****DEBUG: Closing Scope statement level
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 272 indirection: 1
+
+*****DEBUG: Closing Scope global level

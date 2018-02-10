@@ -1,0 +1,42 @@
+expor -> expor || expand
+		|  expand
+
+expand -> expand && expeqs
+		|  expeqs
+
+expeqs -> expeqs == expcmp
+		| expeqs != expcmp
+		| expcmp
+
+expcmp -> expcmp < expas
+		| expcmp > expas
+		| expcmp <= expas
+		| expcmp >= expas
+		| expas
+expas -> expas + expmdr
+		| expas - expmdr
+		| expmdr
+        
+expmdr -> expmdr * expunary
+		| expmdr / expunary
+		| expmdr % expunary
+		| expunary
+
+expunary -> & expunary
+		| * expunary
+		| ! expunary
+		| - expunary
+		| sizeof expunary
+		| expindex
+
+expindex -> expindex [expor] 
+		| expfinal
+        
+expfinal -> id (expression-list)
+		| id ()
+		| id
+		| num
+		| string
+		| character
+		| (expor)
+

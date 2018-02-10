@@ -1,0 +1,25 @@
+*****DEBUG: Creating Scope global level
+*****DEBUG: Creating ScopeInside Parameters
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 285 indirection: 0
+
+x: kind: Scalar specifier: 285 indirection: 0
+
+line 5: 'x' has type void
+*****DEBUG: Creating ScopeInside Parameters
+y: kind: Scalar specifier: 285 indirection: 0
+
+line 6: 'y' has type void
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 285 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+*****DEBUG: Closing Scope top level
+h: kind: Function specifier: 285 indirection: 1
+
+a: kind: Array specifier: 285 indirection: 0
+
+line 8: 'a' has type void
+b: kind: Array specifier: 285 indirection: 1
+
+*****DEBUG: Closing Scope global level

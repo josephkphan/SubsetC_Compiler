@@ -1,0 +1,5 @@
+USERNAME="jphan1"
+DIRECTORY="~/coen175"
+SCU_DC_IP="129.210.16.92"
+
+scp -r ./  ${USERNAME}@${SCU_DC_IP}:${DIRECTORY}

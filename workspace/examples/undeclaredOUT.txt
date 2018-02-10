@@ -1,0 +1,92 @@
+*****DEBUG: Creating Scope global level
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+Use symbol 1: Entryx
+Use symbol 2:  x: kind: Error specifier: 1448767352 indirection: 32767
+ FOUND in CURRENT scope
+Use symbol 1: Entryy
+Use symbol 2:  y: kind: Error specifier: 1448767352 indirection: 32767
+ NOT found in CURRENT scope
+Use symbol 3: symbol y: kind: Error specifier: 1448767352 indirection: 32767
+ Was an Undeclared Bitch
+line 3: 'y' undeclared
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 285 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+y: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating Scope statement level
+w: kind: Scalar specifier: 272 indirection: 0
+
+Use symbol 1: Entryx
+Use symbol 2:  x: kind: Error specifier: -1186977384 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol x: kind: Error specifier: -1186977384 indirection: 32666
+ FOUND in OUTER scope
+Use symbol 1: Entryy
+Use symbol 2:  y: kind: Error specifier: -1186977384 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol y: kind: Error specifier: -1186977384 indirection: 32666
+ FOUND in OUTER scope
+Use symbol 1: Entryz
+Use symbol 2:  z: kind: Error specifier: -1186977384 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol z: kind: Error specifier: -1186977384 indirection: 32666
+ FOUND in OUTER scope
+add
+Use symbol 1: Entryp
+Use symbol 2:  p: kind: Error specifier: -1186977384 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol p: kind: Error specifier: -1186977384 indirection: 32666
+ Was an Undeclared Bitch
+line 13: 'p' undeclared
+add
+*****DEBUG: Closing Scope statement level
+Use symbol 1: Entryz
+Use symbol 2:  z: kind: Error specifier: -1081428376 indirection: 32767
+ FOUND in CURRENT scope
+Use symbol 1: Entryw
+Use symbol 2:  w: kind: Error specifier: -1081428376 indirection: 32767
+ NOT found in CURRENT scope
+Use symbol 3: symbol w: kind: Error specifier: -1081428376 indirection: 32767
+ Was an Undeclared Bitch
+line 16: 'w' undeclared
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 272 indirection: 0
+
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+y: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+Use symbol 1: Entryx
+Use symbol 2:  x: kind: Error specifier: -1186977552 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol x: kind: Error specifier: -1186977552 indirection: 32666
+ FOUND in OUTER scope
+Use symbol 1: Entryy
+Use symbol 2:  y: kind: Error specifier: -1186977552 indirection: 32666
+ FOUND in CURRENT scope
+Use symbol 1: Entryz
+Use symbol 2:  z: kind: Error specifier: -1186977552 indirection: 32666
+ FOUND in CURRENT scope
+add
+Use symbol 1: Entryw
+Use symbol 2:  w: kind: Error specifier: -1186977552 indirection: 32666
+ NOT found in CURRENT scope
+Use symbol 3: symbol w: kind: Error specifier: -1186977552 indirection: 32666
+ Was an Undeclared Bitch
+line 26: 'w' undeclared
+add
+*****DEBUG: Closing Scope top level
+h: kind: Function specifier: 259 indirection: 2
+
+*****DEBUG: Closing Scope global level

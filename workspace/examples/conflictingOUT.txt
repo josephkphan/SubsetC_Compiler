@@ -1,0 +1,89 @@
+*****DEBUG: Creating Scope global level
+x: kind: Scalar specifier: 272 indirection: 0
+
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+v: kind: Function specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+y: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+v: kind: Function specifier: 272 indirection: 0
+
+line 5: conflicting types for 'v'
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+v: kind: Function specifier: 272 indirection: 0
+
+a: kind: Array specifier: 272 indirection: 0
+
+a: kind: Array specifier: 272 indirection: 0
+
+line 9: conflicting types for 'a'
+x: kind: Scalar specifier: 285 indirection: 1
+
+line 11: conflicting types for 'x'
+*****DEBUG: Creating ScopeInside Parameters
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 272 indirection: 1
+
+line 14: conflicting types for 'g'
+*****DEBUG: Creating ScopeInside Parameters
+q: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 272 indirection: 1
+
+*****DEBUG: Creating ScopeInside Parameters
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 272 indirection: 1
+
+f: kind: Scalar specifier: 272 indirection: 0
+
+line 22: conflicting types for 'f'
+h: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+*****DEBUG: Closing Scope top level
+h: kind: Function specifier: 272 indirection: 0
+
+line 25: conflicting types for 'h'
+*****DEBUG: Creating ScopeInside Parameters
+y: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+vv: kind: Function specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+vv: kind: Function specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+vv: kind: Function specifier: 272 indirection: 0
+
+line 32: conflicting types for 'vv'
+*****DEBUG: Closing Scope global level

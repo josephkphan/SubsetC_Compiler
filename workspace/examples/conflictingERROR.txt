@@ -1,0 +1,7 @@
+line 5: conflicting types for 'v'
+line 9: conflicting types for 'a'
+line 11: conflicting types for 'x'
+line 14: conflicting types for 'g'
+line 22: conflicting types for 'f'
+line 25: conflicting types for 'h'
+line 32: conflicting types for 'vv'

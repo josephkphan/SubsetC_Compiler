@@ -1,0 +1,47 @@
+*****DEBUG: Creating Scope global level
+a: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+line 3: redeclaration of 'z'
+x: kind: Scalar specifier: 272 indirection: 0
+
+line 5: redeclaration of 'x'
+y: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating Scope statement level
+y: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope statement level
+*****DEBUG: Creating Scope statement level
+x: kind: Scalar specifier: 272 indirection: 0
+
+z: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope statement level
+*****DEBUG: Closing Scope top level
+f: kind: Function specifier: 272 indirection: 0
+
+a: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+x: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 272 indirection: 0
+
+*****DEBUG: Creating ScopeInside Parameters
+y: kind: Scalar specifier: 272 indirection: 0
+
+*****DEBUG: Closing Scope top level
+g: kind: Function specifier: 272 indirection: 0
+
+line 21: redefinition of 'g'
+*****DEBUG: Closing Scope global level

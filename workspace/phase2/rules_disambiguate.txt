@@ -1,0 +1,78 @@
+exp_or -> exp_and exp_or'
+		| e
+
+exp_or' -> 	|| exp_and exp_or'
+		| 	e
+
+--------------------------------
+exp_and ->	exp_eqs exp_and'
+
+exp_and' -> && exp_eqs exp_and'
+
+---------------------------------
+exp_eqs ->  exp_cmp exp_eqs'
+
+exp_eqs' -> == exp_cmp exp_eqs'
+		|	!= exp_cmp exp_eqs'
+		| e
+
+---------------------------------
+exp_cmp -> exp_as exp_cmp'
+
+exp_cmp' -> < exp_as exp_cmp'
+		| > exp_as exp_cmp'
+		| <= exp_as exp_cmp'
+		| >= exp_as exp_cmp'
+		| e
+
+---------------------------------
+exp_as -> exp_mdr exp_as'
+
+exp_as' -> + exp_mdr exp_as'
+		| - exp_mdr exp_as'
+		| e
+
+---------------------------------
+
+exp_mdr -> exp_unary exp_mdr'
+
+exp_mdr' -> * exp_unary exp_mdr'
+		| / exp_unary exp_mdr'
+		| % exp_unary exp_mdr'
+		| e
+
+--------------------------------
+exp_unary -> & exp_unary
+		| * exp_unary
+		| ! exp_unary
+		| - exp_unary
+		| sizeof exp_unary
+		| exp_index
+
+NOTE: NO LEFT RECUSION.. LOOK AT IT... Dumbshit (talking to you)
+----------------------------------
+exp_index -> exp_final exp_index' 
+
+exp_index' -> [exp_or] exp_index' 
+		| e
+
+----------------------------------
+exp_final -> id (expression-list)
+		| id ()
+		| id
+		| num
+		| string
+		| character
+		| (exp_or)
+
+
+
+
+translation_unit ->  specifier pointers id ;
+					| specifier pointers id [num] ;
+					| specifier pointers id [num] , globalDeclaratorList ;
+					| specifier pointers id , globalDeclaratorList ;
+					| specifier pointers id (parameters) ;
+					| specifier pointers id (parameters) , globalDeclaratorList ;
+
+					| specifier pointers id (parameters) { declarations statements }
