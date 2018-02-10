@@ -11,10 +11,11 @@ Scope *Scope::getEnclosing() const {return _enclosing;}
 void Scope::insert(Symbol *symbol){_symbols.push_back(symbol);}
 
 Symbol *Scope::find(const string &name) const {
-    for (int i = 0; i < _symbols.size(); i++)
-	if (_symbols[i]->getName() == name){
-        return getSymbols()[i];
-    }
+    for (int i = 0; i < _symbols.size(); i++){
+		if (_symbols[i]->getName() == name){
+			return getSymbols()[i];
+		}
+	}
     return NULL;
 }
 

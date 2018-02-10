@@ -3,7 +3,7 @@
 using std::string;
 
 // Constructor
-Symbol::Symbol(const string &name, const Type &type) : _name(name), _type(type){_attributes = 0;}
+Symbol::Symbol(const string &name, const Type &type) : _name(name), _type(type){_definedFlag = 0;}
 
 // Getter
 const string &Symbol::getName() const{return _name;}

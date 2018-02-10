@@ -220,17 +220,10 @@ static void primaryExpression(){
 
     } else if (lookahead == CHARACTER) {
 		name = match_and_save(CHARACTER);
-		// type = Type(CHAR);					//CHARACTER
-
     } else if (lookahead == STRING) {
 		name = match_and_save(STRING);
-		// int length = name.length() - 2;
-		// type = Type(CHAR, 0, length);			//CHARACTER ARRAY
-
     } else if (lookahead == NUM) {
 		num = match_and_save_number();
-		// type = Type(INT);					// INT
-
     } else if (lookahead == ID) {
 		string name = match_and_save(ID);
 		Parameters *params = new Parameters;
@@ -273,7 +266,6 @@ static void postfixExpression(){
 	match('[');
 	expression();
 	match(']');
-	cout << "index" << endl;
     }
 }
 
@@ -296,30 +288,26 @@ static void prefixExpression(){
     if (lookahead == '!') {
 		match('!');
 		prefixExpression();
-		cout << "not" << endl;
 
     } else if (lookahead == '-') {
 		match('-');
 		prefixExpression();
-		cout << "neg" << endl;
 
     } else if (lookahead == '*') {
 		match('*');
 		prefixExpression();
-		cout << "deref" << endl;
 
     } else if (lookahead == '&') {
 		match('&');
 		prefixExpression();
-		cout << "addr" << endl;
 
     } else if (lookahead == SIZEOF) {
 		match(SIZEOF);
 		prefixExpression();
-		cout << "sizeof" << endl;
 
-    } else
+    } else{
 		postfixExpression();
+	}
 }
 
 
@@ -341,23 +329,21 @@ static void multiplicativeExpression(){
     prefixExpression();
 
     while (1) {
-	if (lookahead == '*') {
-	    match('*');
-	    prefixExpression();
-	    cout << "mul" << endl;
+		if (lookahead == '*') {
+			match('*');
+			prefixExpression();
 
-	} else if (lookahead == '/') {
-	    match('/');
-	    prefixExpression();
-	    cout << "div" << endl;
+		} else if (lookahead == '/') {
+			match('/');
+			prefixExpression();
 
-	} else if (lookahead == '%') {
-	    match('%');
-	    prefixExpression();
-	    cout << "rem" << endl;
+		} else if (lookahead == '%') {
+			match('%');
+			prefixExpression();
 
-	} else
-	    break;
+		} else{
+			break;
+		}
     }
 }
 
@@ -380,12 +366,10 @@ static void additiveExpression(){
 	if (lookahead == '+') {
 	    match('+');
 	    multiplicativeExpression();
-	    cout << "add" << endl;
 
 	} else if (lookahead == '-') {
 	    match('-');
 	    multiplicativeExpression();
-	    cout << "sub" << endl;
 
 	} else
 	    break;
@@ -415,23 +399,18 @@ static void relationalExpression(){
 	if (lookahead == '<') {
 	    match('<');
 	    additiveExpression();
-	    cout << "ltn" << endl;
 
 	} else if (lookahead == '>') {
 	    match('>');
 	    additiveExpression();
-	    cout << "gtn" << endl;
 
 	} else if (lookahead == LEQ) {
 	    match(LEQ);
 	    additiveExpression();
-	    cout << "leq" << endl;
 
 	} else if (lookahead == GEQ) {
 	    match(GEQ);
 	    additiveExpression();
-	    cout << "geq" << endl;
-
 	} else
 	    break;
     }
@@ -456,12 +435,10 @@ static void equalityExpression(){
 	if (lookahead == EQL) {
 	    match(EQL);
 	    relationalExpression();
-	    cout << "eql" << endl;
 
 	} else if (lookahead == NEQ) {
 	    match(NEQ);
 	    relationalExpression();
-	    cout << "neq" << endl;
 
 	} else
 	    break;
@@ -486,7 +463,6 @@ static void logicalAndExpression(){
     while (lookahead == AND) {
 	match(AND);
 	equalityExpression();
-	cout << "and" << endl;
     }
 }
 
@@ -507,9 +483,8 @@ static void expression(){
     logicalAndExpression();
 
     while (lookahead == OR) {
-	match(OR);
-	logicalAndExpression();
-	cout << "or" << endl;
+		match(OR);
+		logicalAndExpression();
     }
 }
 
@@ -543,13 +518,12 @@ static void statements(){
  *		  expression
  */
 
-static void assignment()
-{
+static void assignment(){
     expression();
 
     if (lookahead == '=') {
-	match('=');
-	expression();
+		match('=');
+		expression();
     }
 }
 
@@ -573,11 +547,11 @@ static void assignment()
 
 static void statement(){
     if (lookahead == '{') {
-		openScope(" statement level");					// <-------------------- OPEN SCOPE
+		openScope(" statement level");
 		match('{');
 		declarations();
 		statements();
-		closeScope(" statement level");					// <-------------------- CLOSE SCOPE
+		closeScope(" statement level");
 		match('}');
 
     } else if (lookahead == BREAK) {
@@ -782,7 +756,6 @@ static void topLevelDeclaration()
 
     } else if (lookahead == '(') {
 		match('(');
-
 		// openScope(" top level");
 		Parameters *params = parameters();
 		match(')');
@@ -819,13 +792,9 @@ static void topLevelDeclaration()
 int main()
 {
     lookahead = yylex();
-
 	openScope(" global level");
-
     while (lookahead != DONE)
 	topLevelDeclaration();
-
 	closeScope(" global level");
-
     exit(EXIT_SUCCESS);
 }
