@@ -25,6 +25,8 @@ Type checkLogicalOperator(const Type &left, const Type &right, const std::string
 Type checkEqualityOperator(const Type &left, const Type &right, const std::string &error_code);
 Type checkComparisonOperator(const Type &left, const Type &right, const std::string &error_code);
 Type checkMathOperator(const Type &left, const Type &right, const std::string &error_code);
+Type checkArray(const Type &left, const Type &right);
+
 
 // Uniary Operators 
 Type checkNeg(const Type &left);
@@ -32,5 +34,8 @@ Type checkNot(const Type &left);
 Type checkAddr(const Type &left, bool &lvalue);
 Type checkDeref(const Type &left);
 Type checkSizeof(const Type &left);
+
+void checkAssignment(const Type &left, const Type &right, bool &lvalue);
+
 # endif /* CHECKER_H */
 

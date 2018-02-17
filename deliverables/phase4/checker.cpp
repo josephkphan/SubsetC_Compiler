@@ -38,7 +38,7 @@ static string void_object = "'%s' has type void";
 
 static string invalid_return_type = "invalid return type";
 static string invalid_test_type = "invalid type for test expression";
-static string lvalueReq = "lvalue required in expression";
+static string invalid_lvalue = "lvalue required in expression";
 static string invBinary = "invalid operands to binary %s";
 static string invUnary = "invalid operands to unary %s";
 static string notFunction = "called object is not a function";
@@ -197,7 +197,7 @@ Symbol *checkIdentifier(const string &name)
 
 // ------------------ Type Checker Funtions -------------------- // 
 
-void debug_log(string message){
+void checker_log(string message){
 	cout << "*****DEBUG - Checker: " << message << endl;
 }
 
@@ -211,7 +211,7 @@ bool type_error_check(const Type &left, const Type &right){
 
 // Logical Operators
 // Possible Error Codes: || or &&
-Type checkLogicalOperator(const Type &left, const Type &right, const string error_code){
+Type checkLogicalOperator(const Type &left, const Type &right, const string &error_code){
     if(type_error_check(left, right)){return Type();}   
 
     Type left_type = left.promote();
@@ -344,7 +344,7 @@ Type checkAddr(const Type &left, bool &lvalue){
     if(left == Type()){ return Type(); }   
 
     if(!lvalue){
-        report(lvalueReq);
+        report(invalid_lvalue);
         return Type();
     }else{
         return Type(left.specifier(), left.indirection()+1);
@@ -375,3 +375,57 @@ Type checkSizeof(const Type &left){
     }
 }
 
+
+// Symbol *checkFunction(const string &name)
+// {
+//     Symbol *symbol = toplevel->lookup(name);
+
+//     if (symbol == nullptr)
+// 	symbol = declareFunction(name, Type(INT, 0, nullptr));
+
+//     return symbol;
+// }
+
+// void checkFuncReturn(const Type &type, const Type &ret){
+//     if(type_error_check(type, ret)){return;}  
+//     Type t = type;
+
+//     if(t.isFunction()){
+//         t = checkFuncCall(t, *(t.parameters()));
+//     }
+
+//     if(!t.isCompatible(t,ret)){
+//         report(invalid_return_type);
+//         return;
+//     }
+
+
+//     return;
+// }
+
+void checkAssignment(const Type &left, const Type &right, bool &lvalue){
+    if(type_error_check(left, right)){return;}     
+
+    if(!lvalue){
+        report(invalid_lvalue);
+    } else if (!left.isCompatible(left,right))
+        report(invBinary, "=");
+
+    }
+    
+
+
+Type checkArray(const Type &left, const Type &right)
+{
+    if(type_error_check(left, right)){return Type();} 
+
+    Type left_type = left.promote();
+    Type right_type = right.promote();
+
+    if(left_type.isPointer() && !left_type.isPtrToNull() && (right_type.isInteger())){
+        return Type(left_type.specifier(), left_type.indirection()-1);
+    }else{
+        report(invBinary, "[]");
+        return Type();
+    }
+}

@@ -306,12 +306,12 @@ void debug_log(string message){
 
 
 Type Type::promote() const{		
-	if(_kind == ARRAY){
-		debug_log("Promote - promote array to pointer");
-		return Type(_specifier, _indirection +1);
-	} else if(_kind == SCALAR && _specifier == CHAR && _indirection == 0) {
+	if(_kind == SCALAR && _specifier == CHAR && _indirection == 0) {
 		debug_log("Promote - promote char to int");
 		return Type(INT);
+	}else if(_kind == ARRAY){
+		debug_log("Promote - promote array to pointer");
+		return Type(_specifier, _indirection +1);
 	}else {
 		debug_log("Promote - none");
 		return *this;

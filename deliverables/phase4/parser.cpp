@@ -15,7 +15,7 @@
 using namespace std;
 
 static int lookahead;
-static Type expression();
+static Type expression(bool &lvalue);
 static void statement();
 
 
@@ -246,42 +246,47 @@ static void declarations()
  *		  expression , expression-list
  */
 
-static Type primaryExpression()
-{
+static Type primaryExpression(bool &lvalue){
+	Type left;	
     if (lookahead == '(') {
-	match('(');
-	expression();
-	match(')');
+		match('(');
+		left = expression(lvalue);
+		match(')');
 
     } else if (lookahead == CHARACTER) {
-	match(CHARACTER);
+		match(CHARACTER);
 
     } else if (lookahead == STRING) {
-	match(STRING);
+		match(STRING);
 
     } else if (lookahead == NUM) {
-	match(NUM);
+		match(NUM);
 
     } else if (lookahead == ID) {
-	checkIdentifier(expect(ID));
+		checkIdentifier(expect(ID));
 
 	if (lookahead == '(') {
 	    match('(');
 
 	    if (lookahead != ')') {
-		expression();
+			expression(lvalue);
 
-		while (lookahead == ',') {
-		    match(',');
-		    expression();
-		}
+			while (lookahead == ',') {
+				match(',');
+				expression(lvalue);
+			}
 	    }
 
-	    match(')');
+		match(')');
+		//TODO ADD FUNCTION CALL HERE
 	}
 
-    } else
-	error();
+    } else{
+		error();
+		return Type();
+	}
+
+	return left;
 }
 
 
@@ -295,15 +300,16 @@ static Type primaryExpression()
  *		  postfix-expression [ expression ]
  */
 
-static Type postfixExpression()
+static Type postfixExpression(bool &lvalue)
 {
-    Type left = primaryExpression();
+    Type left = primaryExpression(lvalue);
 	Type right;
     while (lookahead == '[') {
 		match('[');
-		right = expression();
-		//left = checkArray(left,right);       <============= Look at this! 
+		right = expression(lvalue);
+		left = checkArray(left,right);  
 		match(']');
+		lvalue = true;
 	}
 	
 	return left;
@@ -324,36 +330,41 @@ static Type postfixExpression()
  *		  sizeof prefix-expression
  */
 
-static Type prefixExpression()
+static Type prefixExpression(bool &lvalue)
 {
 	Type left;
     if (lookahead == '!') {
 		match('!');
-		left = prefixExpression();
+		left = prefixExpression(lvalue);
 		left = checkNot(left);
+		lvalue = false;
 
     } else if (lookahead == '-') {
 		match('-');
-		left = prefixExpression();
+		left = prefixExpression(lvalue);
 		left = checkNeg(left);
+		lvalue = false;
 
     } else if (lookahead == '*') {
 		match('*');
-		left = prefixExpression();
+		left = prefixExpression(lvalue);
 		left = checkDeref(left);
+		lvalue = true;
 
     } else if (lookahead == '&') {
 		match('&');
-		left = prefixExpression();
-		//left = checkAddr(left);					<========== TODO LOOK AT THIS 
+		left = prefixExpression(lvalue);
+		left = checkAddr(left,lvalue);
+		lvalue = false;
 
     } else if (lookahead == SIZEOF) {
 		match(SIZEOF);
-		left = prefixExpression();
+		left = prefixExpression(lvalue);
 		left = checkSizeof(left);
+		lvalue = false;
 
     } else{
-		left = postfixExpression();
+		left = postfixExpression(lvalue);
 	}
 
 	return left;
@@ -375,26 +386,29 @@ static Type prefixExpression()
  *		  multiplicative-expression % prefix-expression
  */
 
-static Type multiplicativeExpression()
+static Type multiplicativeExpression(bool &lvalue)
 {
 	Type left, right;
-    left = prefixExpression();
+    left = prefixExpression(lvalue);
 
     while (1) {
 	if (lookahead == '*') {
 	    match('*');
-		right = prefixExpression();
-			left = checkMathOperator(left,right,"*");
+		right = prefixExpression(lvalue);
+		left = checkMathOperator(left,right,"*");
+		lvalue = false;
 
 	} else if (lookahead == '/') {
 	    match('/');
-		right = prefixExpression();
+		right = prefixExpression(lvalue);
 		left = checkMathOperator(left,right,"/");
+		lvalue = false;
 
 	} else if (lookahead == '%') {
 	    match('%');
-		right = prefixExpression();
+		right = prefixExpression(lvalue);
 		left = checkMathOperator(left,right,"%");
+		lvalue = false;
 
 	} else
 	    break;
@@ -413,21 +427,23 @@ static Type multiplicativeExpression()
  *		  additive-expression - multiplicative-expression
  */
 
-static Type additiveExpression()
+static Type additiveExpression(bool &lvalue)
 {
 	Type left, right;
-	left = multiplicativeExpression();
+	left = multiplicativeExpression(lvalue);
 
     while (1) {
 	if (lookahead == '+') {
 	    match('+');
-		right = multiplicativeExpression();
+		right = multiplicativeExpression(lvalue);
 		left = checkMathOperator(left,right,"+");
+		lvalue = false;
 
 	} else if (lookahead == '-') {
 	    match('-');
-	    right = multiplicativeExpression();
+	    right = multiplicativeExpression(lvalue);
 		left = checkMathOperator(left,right,"-");
+		lvalue = false;
 	} else
 	    break;
 	}
@@ -450,29 +466,32 @@ static Type additiveExpression()
  *		  relational-expression >= additive-expression
  */
 
-static Type relationalExpression()
+static Type relationalExpression(bool &lvalue)
 {
 	Type left, right;
-    left = additiveExpression();			// STOPPED HERE!!!! :) :) :) 
+    left = additiveExpression(lvalue);			// STOPPED HERE!!!! :) :) :) 
 
     while (1) {
 		if (lookahead == '<') {
 			match('<');
-			right = additiveExpression();
+			right = additiveExpression(lvalue);
 			left = checkComparisonOperator(left,right,"<");
-
+			lvalue = false;
 		} else if (lookahead == '>') {
 			match('>');
-			right = additiveExpression();
+			right = additiveExpression(lvalue);
 			left = checkComparisonOperator(left,right,">");
+			lvalue = false;
 		} else if (lookahead == LEQ) {
 			match(LEQ);
-			right = additiveExpression();
+			right = additiveExpression(lvalue);
 			left = checkComparisonOperator(left,right,"<=");
+			lvalue = false;
 		} else if (lookahead == GEQ) {
 			match(GEQ);
-			right = additiveExpression();
+			right = additiveExpression(lvalue);
 			left = checkComparisonOperator(left,right,">=");
+			lvalue = false;
 		} else{
 			break;
 		}
@@ -493,21 +512,23 @@ static Type relationalExpression()
  *		  equality-expression != relational-expression
  */
 
-static Type equalityExpression()
+static Type equalityExpression(bool &lvalue)
 {
 	Type left, right;
-    left = relationalExpression();
+    left = relationalExpression(lvalue);
 
     while (1) {
 	if (lookahead == EQL) {
 	    match(EQL);
-		right = relationalExpression();
+		right = relationalExpression(lvalue);
 		left = checkEqualityOperator(left,right,"==");
+		lvalue = false;
 
 	} else if (lookahead == NEQ) {
 	    match(NEQ);
-		right = relationalExpression();
+		right = relationalExpression(lvalue);
 		left = checkEqualityOperator(left,right,"!=");
+		lvalue = false;
 
 	} else
 	    break;
@@ -527,15 +548,16 @@ static Type equalityExpression()
  *		  logical-and-expression && equality-expression
  */
 
-static Type logicalAndExpression()
+static Type logicalAndExpression(bool &lvalue)
 {
 	Type left, right;
-    left = equalityExpression();
+    left = equalityExpression(lvalue);
 
     while (lookahead == AND) {
 		match(AND);
-		right = equalityExpression();
+		right = equalityExpression(lvalue);
 		left = checkLogicalOperator(left,right,"&&");
+		lvalue = false;
 	}
 	return left;
 }
@@ -553,14 +575,14 @@ static Type logicalAndExpression()
  *		  expression || logical-and-expression
  */
 
-static Type expression()
+static Type expression(bool &lvalue)
 {
 	Type left, right;
-    left = logicalAndExpression();
+    left = logicalAndExpression(lvalue);
 
     while (lookahead == OR) {
 		match(OR);
-		right = logicalAndExpression();
+		right = logicalAndExpression(lvalue);
 		left = checkLogicalOperator(left,right, "||");
 	}
 	return left;
@@ -599,11 +621,15 @@ static void statements()
 
 static void assignment()
 {
-    expression();
+	bool lvalue = false;
+	bool rvalue = true;
+
+    Type left = expression(lvalue);
 
     if (lookahead == '=') {
-	match('=');
-	expression();
+		match('=');
+		Type right = expression(rvalue);
+		checkAssignment(left,right,lvalue);
     }
 }
 
@@ -625,49 +651,49 @@ static void assignment()
  *		  assignment ;
  */
 
-static void statement()
-{
+static void statement(){
+	bool lvalue = false;
     if (lookahead == '{') {
-	match('{');
-	openScope();
-	declarations();
-	statements();
-	closeScope();
-	match('}');
+		match('{');
+		openScope();
+		declarations();
+		statements();
+		closeScope();
+		match('}');
 
     } else if (lookahead == BREAK) {
-	match(BREAK);
-	match(';');
+		match(BREAK);
+		match(';');
 
     } else if (lookahead == RETURN) {
-	match(RETURN);
-	expression();
-	match(';');
+		match(RETURN);
+		Type left = expression(lvalue);
+		match(';');
 
     } else if (lookahead == WHILE) {
-	match(WHILE);
-	match('(');
-	expression();
-	match(')');
-	statement();
+		match(WHILE);
+		match('(');
+		expression(lvalue);
+		match(')');
+		statement();
 
     } else if (lookahead == FOR) {
-	match(FOR);
-	match('(');
-	assignment();
-	match(';');
-	expression();
-	match(';');
-	assignment();
-	match(')');
-	statement();
+		match(FOR);
+		match('(');
+		assignment();
+		match(';');
+		expression(lvalue);
+		match(';');
+		assignment();
+		match(')');
+		statement();
 
     } else if (lookahead == IF) {
-	match(IF);
-	match('(');
-	expression();
-	match(')');
-	statement();
+		match(IF);
+		match('(');
+		expression(lvalue);
+		match(')');
+		statement();
 
 	if (lookahead == ELSE) {
 	    match(ELSE);
@@ -675,8 +701,8 @@ static void statement()
 	}
 
     } else {
-	assignment();
-	match(';');
+		assignment();
+		match(';');
     }
 }
 
