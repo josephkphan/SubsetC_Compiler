@@ -7,12 +7,12 @@ make
 for file in examples/*.c;
 do
     filename=${file%.c}
-    echo -e "\n\nTesting Against:" ${filename}    
+    echo -e "================= Getting Diffs ${filename} ===================="
     # ./scc < ${filename}.c > ${filename}OUT.txt 2>&1
     ./scc < ${filename}.c 2> ${filename}ERROR.txt 
 done
 
-echo "====================================="
+echo "================= Getting Diffs ===================="
 for file in examples/*.c;
 do
     filename=${file%.c}

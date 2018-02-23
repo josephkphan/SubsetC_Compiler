@@ -430,6 +430,8 @@ void checkBreak(int loop_counter){
         report(invalid_break, "");
     } 
 }
+
+
 void checkReturn(const Type &right) {
     Scope* enclosing_scope = toplevel->enclosing();
     Type right_type = right.promote();
@@ -437,13 +439,23 @@ void checkReturn(const Type &right) {
 	if(enclosing_scope != NULL){
 		Symbol* function_sym = enclosing_scope->symbols().back();
         Type function_type = function_sym->type();
-        
+        if (function_type.specifier() == INT){
+            function_type = Type(INT, function_type.indirection());
+        }else if (function_type.specifier() == CHAR){
+            function_type = Type(CHAR, function_type.indirection());
+        }else if (function_type.specifier() == VOID){
+            function_type = Type(VOID, function_type.indirection());
+        }else {
+            cout << " Funky shit in checkReturn";
+        }
+
         function_type = function_type.promote();
         cout << "function_type TYPE:" << function_type.toString() << endl;
 
         if(right.isCompatible(function_type, right_type)) {
             return;
         }else {
+            cout<< "--checker : RETURN ERROR - " << function_type << " " << right_type.toString() << endl;
             report(invalid_return_type, "");
         }
     }
@@ -471,6 +483,7 @@ Symbol *checkFunction(std::string &name)
 }
 
 void *checkFunctionParameters(const Symbol *id, std::vector<Type> &args){
+    check_debug("Inside checkFunctionParameters");
     const Type &t = id->type();
     Type result = error;
 
@@ -506,6 +519,7 @@ void *checkFunctionParameters(const Symbol *id, std::vector<Type> &args){
 
 
 Type checkFuncCall(const Type &funcType, const Parameters &args){
+    check_debug("Inside checkFuncCall");
     if(funcType == Type()){
         return Type();
     }
@@ -517,31 +531,68 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
         return Type();
     }
 
+    cout << "!!_types " << funcType.parameters()->_varargs << endl;
+
     Parameters *p = funcType.parameters();
-    if(p != NULL){
-        if(funcType.parameters_length() == args._types.size()){
-            for(unsigned i = 0; i < args._types.size(); i++){
-                if(args._types[i].isPredicate()){
-                    if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
-                        t = Type(funcType.specifier(), funcType.indirection());
-                        return t;
+
+    if (funcType.parameters()->_varargs == 0){
+        //NO Ellipsis
+
+        if(p != NULL){
+            if(funcType.parameters_length() == args._types.size()){
+                for(unsigned i = 0; i < args._types.size(); i++){
+                    if(args._types[i].isPredicate()){
+                        if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
+                            t = Type(funcType.specifier(), funcType.indirection());
+                            return t;
+                        }else{
+                            //not compatible
+                            check_debug("1");
+                            report(invArgs);
+                            t = Type();
+                        }
                     }else{
-                        //not compatible
+                        //not predicates
+                        check_debug("2");
                         report(invArgs);
                         t = Type();
                     }
-                }else{
-                    //not predicates
-                    report(invArgs);
-                    t = Type();
-                }
 
+                }
+                return Type(funcType.specifier(), funcType.indirection());
+            } else{
+                //# of params and args don't match
+                cout << "3 - " <<funcType.parameters_length() << args._types.size();
+
+                report(invArgs);
+                return Type();
             }
-            return Type(funcType.specifier(), funcType.indirection());
-        } else{
-            //# of params and args don't match
-            report(invArgs);
-            return Type();
+        }
+    }else {
+        //Ellipsis
+        if(p != NULL){
+            if(funcType.parameters_length() == args._types.size()){
+                for(unsigned i = 0; i < (*p)._types.size(); i++){
+                    if(args._types[i].isPredicate()){
+                        if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
+                            t = Type(funcType.specifier(), funcType.indirection());
+                            return t;
+                        }else{
+                            //not compatible
+                            check_debug("1");
+                            report(invArgs);
+                            t = Type();
+                        }
+                    }else{
+                        //not predicates
+                        check_debug("2");
+                        report(invArgs);
+                        t = Type();
+                    }
+
+                }
+                return Type(funcType.specifier(), funcType.indirection());
+            } 
         }
     }
     

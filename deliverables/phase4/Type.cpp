@@ -248,44 +248,46 @@ ostream &operator <<(ostream &ostr, const Type &type)
 	ostr << "error";
 
     else {
-	if (type.specifier() == INT)
-	    ostr << "int";
-	else if (type.specifier() == CHAR)
-	    ostr << "char";
-	else if (type.specifier() == VOID)
-	    ostr << "void";
-	else
-	    ostr << type.specifier();		// shouldn't happen
+		if (type.specifier() == INT){
+			ostr << "int";
+		}
+		else if (type.specifier() == CHAR)
+			ostr << "char";
+		else if (type.specifier() == VOID)
+			ostr << "void";
+		else{
+			ostr << type.specifier();		// shouldn't happen
+		}
 
-	if (type.indirection() > 0) {
-	    ostr << " ";
+		if (type.indirection() > 0) {
+			ostr << " ";
 
-	    for (i = 0; i < type.indirection(); i ++)
-		ostr << "*";
-	}
+			for (i = 0; i < type.indirection(); i ++)
+			ostr << "*";
+		}
 
-	if (type.isArray())
-	    ostr << "[" << type.length() << "]";
+		if (type.isArray())
+			ostr << "[" << type.length() << "]";
 
-	else if (type.isFunction()) {
-	    ostr << "(";
+		else if (type.isFunction()) {
+			ostr << "(";
 
-	    if (type.parameters() != nullptr) {
-		if (type.parameters()->_types.size() == 0)
-		    ostr << "void";
-		else
-		    for (i = 0; i < type.parameters()->_types.size(); i ++) {
-			if (i > 0)
-			    ostr << ", ";
-			ostr << type.parameters()->_types[i];
-		    }
+			if (type.parameters() != nullptr) {
+			if (type.parameters()->_types.size() == 0)
+				ostr << "void";
+			else
+				for (i = 0; i < type.parameters()->_types.size(); i ++) {
+				if (i > 0)
+					ostr << ", ";
+				ostr << type.parameters()->_types[i];
+				}
 
-		if (type.parameters()->_varargs)
-		    ostr << ", ...";
-	    }
+			if (type.parameters()->_varargs)
+				ostr << ", ...";
+			}
 
-	    ostr << ")";
-	}
+			ostr << ")";
+		}
     }
 
     return ostr;
