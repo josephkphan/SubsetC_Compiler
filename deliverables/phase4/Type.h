@@ -25,8 +25,9 @@
 # include "nullptr.h"
 
 struct Parameters {
-    int _varargs;
-    std::vector<class Type> _types;
+    public:
+        int _varargs;
+        std::vector<class Type> _types;
 };
 
 class Type {
@@ -56,6 +57,7 @@ public:
     unsigned indirection() const;
     unsigned length() const;
     Parameters *parameters() const;
+    int parameters_length() const;
 
 
     // New Functions 
@@ -64,6 +66,7 @@ public:
     bool isPredicate() const;
     bool isCompatible(const Type &left, const Type &right) const;
     bool isPtrToNull() const;
+    std::string toString() const;
 
 };
 

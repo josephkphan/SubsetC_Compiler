@@ -37,5 +37,14 @@ Type checkSizeof(const Type &left);
 
 void checkAssignment(const Type &left, const Type &right, bool &lvalue);
 
+void checkBreak(int loop_counter);
+void checkReturn(const Type &right);
+void checkLoop(const Type &right);
+void checkIf(const Type &right);
+
+Symbol *checkFunction(std::string &name);
+void *checkFunctionParameters(const Symbol *id, std::vector<Type> &args);
+Type checkFuncCall(const Type &funcType, const Parameters &args);
+void checkTest(const Type &type);
 # endif /* CHECKER_H */
 

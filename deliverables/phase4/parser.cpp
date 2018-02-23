@@ -17,8 +17,11 @@ using namespace std;
 static int lookahead;
 static Type expression(bool &lvalue);
 static void statement();
+static int loop_counter = 0;
 
-
+void parser_debug(string message){
+    cout << "--" << message << endl;
+}
 /*
  * Function:	error
  *
@@ -248,40 +251,73 @@ static void declarations()
 
 static Type primaryExpression(bool &lvalue){
 	Type left;	
+	string name;
+	Parameters parameters;
+	Symbol *function_symbol;
     if (lookahead == '(') {
 		match('(');
 		left = expression(lvalue);
 		match(')');
+		lvalue=false;
 
     } else if (lookahead == CHARACTER) {
-		match(CHARACTER);
+		name = expect(CHARACTER);
+		left = Type(CHAR, 0);
+		lvalue=false;
 
     } else if (lookahead == STRING) {
-		match(STRING);
+		name = expect(STRING);
+		int length = name.length() - 2;
+		left = Type(CHAR, 0, length);
+
+		lvalue=false;
 
     } else if (lookahead == NUM) {
 		match(NUM);
+		left = Type(INT);
+		lvalue=false;
 
     } else if (lookahead == ID) {
-		checkIdentifier(expect(ID));
+		name = expect(ID);
+		// checkIdentifier(expect(ID));
+		lvalue=false;
 
-	if (lookahead == '(') {
-	    match('(');
+		if (lookahead == '(') {
+			parser_debug("primaryExpression: ID if happend");
+			match('(');
 
-	    if (lookahead != ')') {
-			expression(lvalue);
+			if (lookahead != ')') {
+				parameters._types.push_back(expression(lvalue));
 
-			while (lookahead == ',') {
-				match(',');
-				expression(lvalue);
+				while (lookahead == ',') {
+					match(',');
+					expression(lvalue);
+				}
 			}
-	    }
 
-		match(')');
-		//TODO ADD FUNCTION CALL HERE
-	}
+			match(')');
+			function_symbol=checkFunction(name);
+			// checkFunctionParameters(function_symbol,parameters);
+			left = checkFuncCall(function_symbol->type(),parameters);
+			parser_debug("primaryExpression: return in ID");
+			parser_debug("primaryExpression: LEFT TYPE - " + left.toString());
+			return left;
+		}else {
+			Symbol *checkID = checkIdentifier(name);
+		    left = checkID->type();
+		    //cout << "IN PRIMARYEXPRESSION ID ELSE" << endl;
+		    if(checkID->type().isScalar()){
+		    	lvalue = true;
+		    }	
+		    else{
+		    	lvalue = false;
+		    }
+		return left;
+		}
+
 
     } else{
+		parser_debug("primaryExpression: return error");
 		error();
 		return Type();
 	}
@@ -412,7 +448,8 @@ static Type multiplicativeExpression(bool &lvalue)
 
 	} else
 	    break;
-    }
+	}
+	return left;
 }
 
 
@@ -469,7 +506,7 @@ static Type additiveExpression(bool &lvalue)
 static Type relationalExpression(bool &lvalue)
 {
 	Type left, right;
-    left = additiveExpression(lvalue);			// STOPPED HERE!!!! :) :) :) 
+    left = additiveExpression(lvalue); 
 
     while (1) {
 		if (lookahead == '<') {
@@ -584,6 +621,7 @@ static Type expression(bool &lvalue)
 		match(OR);
 		right = logicalAndExpression(lvalue);
 		left = checkLogicalOperator(left,right, "||");
+		lvalue = false;	
 	}
 	return left;
 }
@@ -622,14 +660,14 @@ static void statements()
 static void assignment()
 {
 	bool lvalue = false;
-	bool rvalue = true;
+	bool rvalue = false;
 
     Type left = expression(lvalue);
 
     if (lookahead == '=') {
 		match('=');
 		Type right = expression(rvalue);
-		checkAssignment(left,right,lvalue);
+		checkAssignment(left,right,lvalue);				//TODO should check assignment have a lvalue
     }
 }
 
@@ -663,35 +701,46 @@ static void statement(){
 
     } else if (lookahead == BREAK) {
 		match(BREAK);
+		checkBreak(loop_counter);
 		match(';');
 
     } else if (lookahead == RETURN) {
 		match(RETURN);
-		Type left = expression(lvalue);
+		Type right = expression(lvalue);
+		checkReturn(right);
 		match(';');
 
     } else if (lookahead == WHILE) {
 		match(WHILE);
 		match('(');
-		expression(lvalue);
+		Type right = expression(lvalue);
+		checkLoop(right);
+		loop_counter++;
+		checkTest(right);
 		match(')');
 		statement();
+		loop_counter--;
 
     } else if (lookahead == FOR) {
 		match(FOR);
 		match('(');
 		assignment();
 		match(';');
-		expression(lvalue);
+		Type right = expression(lvalue); 
+		checkLoop(right);						//TODO: 
+		loop_counter++;
+		checkTest(right);
 		match(';');
 		assignment();
 		match(')');
 		statement();
+		loop_counter--;
 
     } else if (lookahead == IF) {
 		match(IF);
 		match('(');
-		expression(lvalue);
+		Type right = expression(lvalue);
+		checkTest(right);
 		match(')');
 		statement();
 

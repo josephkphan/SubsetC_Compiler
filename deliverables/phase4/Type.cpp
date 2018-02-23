@@ -228,7 +228,10 @@ Parameters *Type::parameters() const
     return _parameters;
 }
 
-
+int Type::parameters_length() const
+{
+    return _parameters->_types.size();
+}
 /*
  * Function:	operator <<
  *
@@ -301,9 +304,12 @@ bool Type::isInteger() const
 }
 
 void debug_log(string message){
-	cout << "*****DEBUG - Type: " << message << endl;
+	// cout << "*****DEBUG - Type: " << message << endl;
 }
 
+void type_debug(string message){
+	cout << "--" << message << endl;
+}
 
 Type Type::promote() const{		
 	if(_kind == SCALAR && _specifier == CHAR && _indirection == 0) {
@@ -345,20 +351,37 @@ bool Type::isPtrToNull() const
  
 bool Type::isCompatible(const Type &left, const Type &right) const
 {
-	Type left_type = left.promote();
-	Type right_type = right.promote();
 
-	
-	if(left_type.isPredicate() && right_type.isPredicate() && left_type == right_type){
-		//identical predicate types
+	if (left.isPointer() && right._indirection == 1 && right._specifier == VOID)
+	return true;
+
+    if (right.isPointer() && left._indirection == 1 && left._specifier == VOID)
 		return true;
-	}else if((left_type._indirection > 0 && left_type._kind == SCALAR) && (right_type._indirection == 1 && right_type._kind == SCALAR && right_type._specifier == VOID)){
-		//one is pointer one is pointer(void)
+
+	if(left.isPredicate() && left.promote() == right.promote()){
 		return true;
-	}else if((right_type._indirection > 0 && right_type._kind == SCALAR ) && ( left_type._indirection == 1 && left_type._kind == SCALAR  && left_type._specifier == VOID)){
-		//one is pointer one is pointer(void)
-		return true;
-	}else{
+	}else {
+		cout<< left << right << endl;
+		type_debug("isCompatible : " + left.toString() + " " + right.toString());
 		return false;
 	}
+
+
+}
+
+std::string Type::toString() const{ 
+	string s = "";
+	if (_kind == ERROR){
+		s = "ERROR";
+	}else if (_kind == SCALAR){
+		s = "SCALAR";
+	}else if (_kind == ARRAY){
+		s = "ARRAY";
+	}else if (_kind == FUNCTION){
+		s = "FUNCTION";
+	}else {
+		s = "FUNKY SHIT";
+	}
+	
+	return s;
 }

@@ -40,10 +40,17 @@ static string invalid_return_type = "invalid return type";
 static string invalid_test_type = "invalid type for test expression";
 static string invalid_lvalue = "lvalue required in expression";
 static string invBinary = "invalid operands to binary %s";
-static string invUnary = "invalid operands to unary %s";
+static string invUnary = "invalid operand to unary %s";
 static string notFunction = "called object is not a function";
 static string invArgs = "invalid arguments to called function";
+static string test_expression = "invalid type for test expression";
+static string invalid_break = "break statement not within loop";
 
+
+
+void check_debug(string message){
+    cout << "--" << message << endl;
+}
 /*
  * Function:	checkIfVoidObject
  *
@@ -293,22 +300,28 @@ Type checkSub(const Type &left_type, const Type &right_type, const string &error
 }
 
 Type checkMathOperator(const Type &left, const Type &right, const string &error_code){
-    if(type_error_check(left, right)){return Type();}    
+    if(type_error_check(left, right)){
+        check_debug("checkMathOperator: error");
+        return Type();
+    }    
 
     Type left_type = left.promote();
     Type right_type = right.promote();
 
     // Jump to Add Function
     if(error_code == "+"){
+        check_debug("checkMathOperator: in add");
         return checkAdd(left_type, right_type, error_code); 
     }
     
     // Jump to Subtract Function
     if (error_code == "-"){
+        check_debug("checkMathOperator: in sub");
         return checkSub(left_type, right_type, error_code); 
     }
 
     // All other Operators
+    check_debug("checkMathOperator: in % * /");
     if(left_type.isInteger() && right_type.isInteger()){   
         return Type(INT); 
     }else{
@@ -375,43 +388,25 @@ Type checkSizeof(const Type &left){
     }
 }
 
-
-// Symbol *checkFunction(const string &name)
-// {
-//     Symbol *symbol = toplevel->lookup(name);
-
-//     if (symbol == nullptr)
-// 	symbol = declareFunction(name, Type(INT, 0, nullptr));
-
-//     return symbol;
-// }
-
-// void checkFuncReturn(const Type &type, const Type &ret){
-//     if(type_error_check(type, ret)){return;}  
-//     Type t = type;
-
-//     if(t.isFunction()){
-//         t = checkFuncCall(t, *(t.parameters()));
-//     }
-
-//     if(!t.isCompatible(t,ret)){
-//         report(invalid_return_type);
-//         return;
-//     }
-
-
-//     return;
-// }
-
 void checkAssignment(const Type &left, const Type &right, bool &lvalue){
+    check_debug("checkAssignment: right - "+ right.toString());
     if(type_error_check(left, right)){return;}     
+
+    Type left_type = left.promote();
+    Type right_type = right.promote();
 
     if(!lvalue){
         report(invalid_lvalue);
-    } else if (!left.isCompatible(left,right))
-        report(invBinary, "=");
-
+        return;
+    } else if (!left_type.isCompatible(left_type,right_type)){    
+         report(invBinary, "=");
+         cout << "HERE!";
+         check_debug("checkAssignment: right_type - "+ right_type.toString()); 
+         check_debug("checkAssignment: left_type - "+ left_type.toString()); 
+       
     }
+
+}
     
 
 
@@ -428,4 +423,176 @@ Type checkArray(const Type &left, const Type &right)
         report(invBinary, "[]");
         return Type();
     }
+}
+
+void checkBreak(int loop_counter){
+    if(loop_counter <= 0){
+        report(invalid_break, "");
+    } 
+}
+void checkReturn(const Type &right) {
+    Scope* enclosing_scope = toplevel->enclosing();
+    Type right_type = right.promote();
+    cout << "RIGHT TYPE:" << right.toString() << endl; 
+	if(enclosing_scope != NULL){
+		Symbol* function_sym = enclosing_scope->symbols().back();
+        Type function_type = function_sym->type();
+        
+        function_type = function_type.promote();
+        cout << "function_type TYPE:" << function_type.toString() << endl;
+
+        if(right.isCompatible(function_type, right_type)) {
+            return;
+        }else {
+            report(invalid_return_type, "");
+        }
+    }
+}
+
+
+void checkLoop(const Type &right){
+    if(!right.isPredicate()) report(test_expression, "");
+	else return;
+}
+
+void checkIf(const Type &right){
+
+}
+
+
+Symbol *checkFunction(std::string &name)
+{
+    Symbol *symbol = toplevel->lookup(name);
+
+    if (symbol == nullptr)
+	symbol = declareFunction(name, Type(INT, 0, nullptr));
+
+    return symbol;
+}
+
+void *checkFunctionParameters(const Symbol *id, std::vector<Type> &args){
+    const Type &t = id->type();
+    Type result = error;
+
+
+    if (t != error) {
+        if (!t.isFunction())
+            report(notFunction,"");
+
+            else {
+            Parameters *params = t.parameters();
+            result = Type(t.specifier(), t.indirection());
+
+            for (unsigned i = 0; i < args.size(); i ++)
+                args[i] = args[i].promote();
+
+            if (params != nullptr) {
+            if (t.parameters_length() != args.size())
+                report(invArgs);
+
+            else {
+                for (unsigned i = 0; i < args.size(); i ++)
+                if (!(*params)._types[i].isCompatible(args[i],(*params)._types[i])) {
+                    report(invArgs);
+                    result = error;
+                    break;
+                }
+            }
+            }
+        }
+    }
+
+}
+
+
+Type checkFuncCall(const Type &funcType, const Parameters &args)
+{
+    //cout << funcType.parameters()->size() << "-" << args.size() << endl;
+    //cout << "checkFuncCall: " << funcType << ", arg size: " << args.size() << endl;
+    //identifier must have type "function returning T"
+    //result is type T
+    //else, report(notFunction);
+    //arguments must be predicate types, number of params and args must agree and types must be compatible
+    //else, report(invArgs);
+    //cout << "checkFuncCall 2" << endl;
+    if(funcType == Type())
+    {
+        return Type();
+    }
+    //cout << "checkFuncCall 3" << endl;
+    Type t = Type();
+    if(funcType.isFunction())
+    {
+        t = Type(funcType.specifier());
+    }
+    else
+    {
+        //funcType = Type();
+        report(notFunction);
+        return Type();
+    }
+    //cout << "checkFuncCall 4" << endl;
+    //if params null
+    Parameters *p = funcType.parameters();
+    if(p != NULL)
+    {
+        if(funcType.parameters_length() == args._types.size())
+        {
+            //cout << "checkFuncCall: params size matches args" << endl;
+            for(unsigned i = 0; i < args._types.size(); i++)
+            {
+                if(args._types[i].isPredicate())
+                {
+                    if(t.isCompatible((*p)._types[i],args._types[i]))  //is compatible
+                    {
+                        //cout << "checkFuncCall: iscompatible: " << (*p)[i] << ", " << args[i] << endl;                                               
+                        t = Type(funcType.specifier(), funcType.indirection());
+                        //cout << "checkFuncCall: function type: " << t << endl;
+                        return t;
+                    }
+                    else
+                    {
+                        //not compatible
+                        report(invArgs);
+                        t = Type();
+                    }
+                }
+                else
+                {
+                    //not predicates
+                    report(invArgs);
+                    t = Type();
+                }
+
+            }
+            return Type(funcType.specifier(), funcType.indirection());
+        }
+        else
+        {
+            //# of params and args don't match
+            report(invArgs);
+            return Type();
+        }
+    }
+    
+    return t;
+      
+}
+
+
+void checkTest(const Type &type)
+{
+    //cout << "checkWFI(): " << type << endl;
+    if(type == Type())
+    {
+        //cout << "In checkWFI(): Type is error" << endl;
+        report(invalid_test_type,"");
+        return;
+    }
+    Type t;
+    t = type.promote();
+    //cout << "checkWFI():2  " << t << endl;
+    if(!t.isPredicate())
+        report(invalid_test_type,"");
+    return;
 }
