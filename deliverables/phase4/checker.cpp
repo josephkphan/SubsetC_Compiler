@@ -505,60 +505,32 @@ void *checkFunctionParameters(const Symbol *id, std::vector<Type> &args){
 }
 
 
-Type checkFuncCall(const Type &funcType, const Parameters &args)
-{
-    //cout << funcType.parameters()->size() << "-" << args.size() << endl;
-    //cout << "checkFuncCall: " << funcType << ", arg size: " << args.size() << endl;
-    //identifier must have type "function returning T"
-    //result is type T
-    //else, report(notFunction);
-    //arguments must be predicate types, number of params and args must agree and types must be compatible
-    //else, report(invArgs);
-    //cout << "checkFuncCall 2" << endl;
-    if(funcType == Type())
-    {
+Type checkFuncCall(const Type &funcType, const Parameters &args){
+    if(funcType == Type()){
         return Type();
     }
-    //cout << "checkFuncCall 3" << endl;
     Type t = Type();
-    if(funcType.isFunction())
-    {
+    if(funcType.isFunction()){
         t = Type(funcType.specifier());
-    }
-    else
-    {
-        //funcType = Type();
+    }else{
         report(notFunction);
         return Type();
     }
-    //cout << "checkFuncCall 4" << endl;
-    //if params null
+
     Parameters *p = funcType.parameters();
-    if(p != NULL)
-    {
-        if(funcType.parameters_length() == args._types.size())
-        {
-            //cout << "checkFuncCall: params size matches args" << endl;
-            for(unsigned i = 0; i < args._types.size(); i++)
-            {
-                if(args._types[i].isPredicate())
-                {
-                    if(t.isCompatible((*p)._types[i],args._types[i]))  //is compatible
-                    {
-                        //cout << "checkFuncCall: iscompatible: " << (*p)[i] << ", " << args[i] << endl;                                               
+    if(p != NULL){
+        if(funcType.parameters_length() == args._types.size()){
+            for(unsigned i = 0; i < args._types.size(); i++){
+                if(args._types[i].isPredicate()){
+                    if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
                         t = Type(funcType.specifier(), funcType.indirection());
-                        //cout << "checkFuncCall: function type: " << t << endl;
                         return t;
-                    }
-                    else
-                    {
+                    }else{
                         //not compatible
                         report(invArgs);
                         t = Type();
                     }
-                }
-                else
-                {
+                }else{
                     //not predicates
                     report(invArgs);
                     t = Type();
@@ -566,9 +538,7 @@ Type checkFuncCall(const Type &funcType, const Parameters &args)
 
             }
             return Type(funcType.specifier(), funcType.indirection());
-        }
-        else
-        {
+        } else{
             //# of params and args don't match
             report(invArgs);
             return Type();

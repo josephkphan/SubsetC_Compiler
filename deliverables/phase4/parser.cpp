@@ -291,7 +291,7 @@ static Type primaryExpression(bool &lvalue){
 
 				while (lookahead == ',') {
 					match(',');
-					expression(lvalue);
+					parameters._types.push_back(expression(lvalue));
 				}
 			}
 
