@@ -43,13 +43,12 @@ static string invBinary = "invalid operands to binary %s";
 static string invUnary = "invalid operand to unary %s";
 static string notFunction = "called object is not a function";
 static string invArgs = "invalid arguments to called function";
-static string test_expression = "invalid type for test expression";
 static string invalid_break = "break statement not within loop";
 
 
 
 void check_debug(string message){
-    cout << "--" << message << endl;
+    // cout << "--" << message << endl;
 }
 /*
  * Function:	checkIfVoidObject
@@ -135,7 +134,7 @@ Symbol *defineFunction(const string &name, const Type &type)
 
 Symbol *declareFunction(const string &name, const Type &type)
 {
-    cout << name << ": " << type << endl;
+    // cout << name << ": " << type << endl;
     Symbol *symbol = outermost->find(name);
 
     if (symbol == nullptr) {
@@ -162,7 +161,7 @@ Symbol *declareFunction(const string &name, const Type &type)
 
 Symbol *declareVariable(const string &name, const Type &type)
 {
-    cout << name << ": " << type << endl;
+    // cout << name << ": " << type << endl;
     Symbol *symbol = toplevel->find(name);
 
     if (symbol == nullptr) {
@@ -204,9 +203,6 @@ Symbol *checkIdentifier(const string &name)
 
 // ------------------ Type Checker Funtions -------------------- // 
 
-void checker_log(string message){
-	cout << "*****DEBUG - Checker: " << message << endl;
-}
 
 bool type_error_check(const Type &left, const Type &right){
     if(left == Type() || right == Type()){
@@ -224,7 +220,7 @@ Type checkLogicalOperator(const Type &left, const Type &right, const string &err
     Type left_type = left.promote();
     Type right_type = right.promote();
 
-    if(left_type.isPredicate() && right_type.isPredicate()){
+    if(left_type.isValue() && right_type.isValue()){
         return Type(INT);
     }else {
         report(invBinary, error_code); 
@@ -241,7 +237,7 @@ Type checkComparisonOperator(const Type &left, const Type &right, const string &
     Type left_type = left.promote();
     Type right_type = right.promote();
 
-    if(left_type == right_type && left_type.isPredicate()){   
+    if(left_type == right_type && left_type.isValue()){   
         return Type(INT);
     }else{
         report(invBinary, error_code);
@@ -346,7 +342,7 @@ Type checkNeg(const Type &left){
 Type checkNot(const Type &left){
     if(left == Type()){ return Type(); }   
 
-    if(left.isPredicate()){
+    if(left.isValue()){
         return Type(INT);
     }else{
         report(invUnary, "!");
@@ -380,7 +376,7 @@ Type checkDeref(const Type &left){
 Type checkSizeof(const Type &left){
     if(left == Type()){ return Type(); }   
 
-    if(left.isPredicate()){
+    if(left.isValue()){
         return Type(INT);
     }else{
         report(invUnary, "sizeof");
@@ -400,7 +396,6 @@ void checkAssignment(const Type &left, const Type &right, bool &lvalue){
         return;
     } else if (!left_type.isCompatible(left_type,right_type)){    
          report(invBinary, "=");
-         cout << "HERE!";
          check_debug("checkAssignment: right_type - "+ right_type.toString()); 
          check_debug("checkAssignment: left_type - "+ left_type.toString()); 
        
@@ -435,7 +430,7 @@ void checkBreak(int loop_counter){
 void checkReturn(const Type &right) {
     Scope* enclosing_scope = toplevel->enclosing();
     Type right_type = right.promote();
-    cout << "RIGHT TYPE:" << right.toString() << endl; 
+    // cout << "RIGHT TYPE:" << right.toString() << endl; 
 	if(enclosing_scope != NULL){
 		Symbol* function_sym = enclosing_scope->symbols().back();
         Type function_type = function_sym->type();
@@ -450,12 +445,12 @@ void checkReturn(const Type &right) {
         }
 
         function_type = function_type.promote();
-        cout << "function_type TYPE:" << function_type.toString() << endl;
+        // cout << "function_type TYPE:" << function_type.toString() << endl;
 
         if(right.isCompatible(function_type, right_type)) {
             return;
         }else {
-            cout<< "--checker : RETURN ERROR - " << function_type << " " << right_type.toString() << endl;
+            // cout<< "--checker : RETURN ERROR - " << function_type << " " << right_type.toString() << endl;
             report(invalid_return_type, "");
         }
     }
@@ -463,7 +458,7 @@ void checkReturn(const Type &right) {
 
 
 void checkLoop(const Type &right){
-    if(!right.isPredicate()) report(test_expression, "");
+    if(!right.isValue()) report(invalid_test_type, "");
 	else return;
 }
 
@@ -531,7 +526,7 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
         return Type();
     }
 
-    cout << "!!_types " << funcType.parameters()->_varargs << endl;
+    // cout << "!!_types " << funcType.parameters()->_varargs << endl;
 
     Parameters *p = funcType.parameters();
 
@@ -541,7 +536,7 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
         if(p != NULL){
             if(funcType.parameters_length() == args._types.size()){
                 for(unsigned i = 0; i < args._types.size(); i++){
-                    if(args._types[i].isPredicate()){
+                    if(args._types[i].isValue()){
                         if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
                             t = Type(funcType.specifier(), funcType.indirection());
                             return t;
@@ -562,7 +557,7 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
                 return Type(funcType.specifier(), funcType.indirection());
             } else{
                 //# of params and args don't match
-                cout << "3 - " <<funcType.parameters_length() << args._types.size();
+                // cout << "3 - " <<funcType.parameters_length() << args._types.size();
 
                 report(invArgs);
                 return Type();
@@ -573,7 +568,7 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
         if(p != NULL){
             if(funcType.parameters_length() == args._types.size()){
                 for(unsigned i = 0; i < (*p)._types.size(); i++){
-                    if(args._types[i].isPredicate()){
+                    if(args._types[i].isValue()){
                         if(t.isCompatible((*p)._types[i],args._types[i])){  //is compatible
                             t = Type(funcType.specifier(), funcType.indirection());
                             return t;
@@ -603,17 +598,13 @@ Type checkFuncCall(const Type &funcType, const Parameters &args){
 
 void checkTest(const Type &type)
 {
-    //cout << "checkWFI(): " << type << endl;
-    if(type == Type())
-    {
-        //cout << "In checkWFI(): Type is error" << endl;
+    if(type == Type()){
         report(invalid_test_type,"");
         return;
     }
     Type t;
     t = type.promote();
-    //cout << "checkWFI():2  " << t << endl;
-    if(!t.isPredicate())
+    if(!t.isValue())
         report(invalid_test_type,"");
     return;
 }

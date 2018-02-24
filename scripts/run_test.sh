@@ -7,7 +7,7 @@ make
 for file in examples/*.c;
 do
     filename=${file%.c}
-    echo -e "================= Getting Diffs ${filename} ===================="
+    echo -e "================= Getting Logs ${filename} ===================="
     # ./scc < ${filename}.c > ${filename}OUT.txt 2>&1
     ./scc < ${filename}.c 2> ${filename}ERROR.txt 
 done

@@ -63,7 +63,7 @@ public:
     // New Functions 
     Type promote() const;
     bool isPointer() const;
-    bool isPredicate() const;
+    bool isValue() const;
     bool isCompatible(const Type &left, const Type &right) const;
     bool isPtrToNull() const;
     std::string toString() const;

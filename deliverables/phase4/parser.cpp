@@ -20,7 +20,7 @@ static void statement();
 static int loop_counter = 0;
 
 void parser_debug(string message){
-    cout << "--" << message << endl;
+    // cout << "--" << message << endl;
 }
 /*
  * Function:	error

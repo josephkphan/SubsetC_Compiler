@@ -305,23 +305,19 @@ bool Type::isInteger() const
 	}
 }
 
-void debug_log(string message){
-	// cout << "*****DEBUG - Type: " << message << endl;
-}
-
 void type_debug(string message){
-	cout << "--" << message << endl;
+	// cout << "--" << message << endl;
 }
 
 Type Type::promote() const{		
 	if(_kind == SCALAR && _specifier == CHAR && _indirection == 0) {
-		debug_log("Promote - promote char to int");
+		type_debug("Type: Promote - promote char to int");
 		return Type(INT);
 	}else if(_kind == ARRAY){
-		debug_log("Promote - promote array to pointer");
+		type_debug("Type: Promote - promote array to pointer");
 		return Type(_specifier, _indirection +1);
 	}else {
-		debug_log("Promote - none");
+		type_debug("Type: Promote - none");
 		return *this;
 	}
 }
@@ -333,7 +329,7 @@ bool Type::isPointer() const {
 	return false;
 }
 
-bool Type::isPredicate() const
+bool Type::isValue() const
 {
 	//returns true if pointer(T) or INT
 	
@@ -360,11 +356,11 @@ bool Type::isCompatible(const Type &left, const Type &right) const
     if (right.isPointer() && left._indirection == 1 && left._specifier == VOID)
 		return true;
 
-	if(left.isPredicate() && left.promote() == right.promote()){
+	if(left.isValue() && left.promote() == right.promote()){
 		return true;
 	}else {
-		cout<< left << right << endl;
-		type_debug("isCompatible : " + left.toString() + " " + right.toString());
+		// cout<< left << right << endl;
+		type_debug("Type: isCompatible : " + left.toString() + " " + right.toString());
 		return false;
 	}
 
