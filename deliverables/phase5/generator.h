@@ -2,6 +2,6 @@
 # define GENERATOR_H
 # include "Tree.h"
 
-void generateGlobals(const Symbols &globals);
+void printGlobals(const Symbols &globals);
 
 # endif 

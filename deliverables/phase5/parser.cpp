@@ -999,7 +999,7 @@ int main()
 	topLevelDeclaration();
 
 	if (numerrors == 0)
-		generateGlobals(globals);
+		printGlobals(globals);
 
     closeScope();
     exit(EXIT_SUCCESS);
