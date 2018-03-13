@@ -13,17 +13,17 @@ do
     ./scc < ${filename}.c > ${filename}TEST.txt 
 done
 
-echo "================= Getting Diffs ===================="
-for file in examples/*.c;
-do
-    filename=${file%.c}
-    echo -e "\n\nRunning Diff Against:" ${filename}    
-    echo " --------- DIFF  ${filename} "
-	# diff ${filename}.err ${filename}ERROR.txt
-    diff ${filename}.s ${filename}TEST.txt
-    echo " --------- END   DIFFS  "
+# echo "================= Getting Diffs ===================="
+# for file in examples/*.c;
+# do
+#     filename=${file%.c}
+#     echo -e "\n\nRunning Diff Against:" ${filename}    
+#     echo " --------- DIFF  ${filename} "
+# 	# diff ${filename}.err ${filename}ERROR.txt
+#     diff ${filename}.s ${filename}TEST.txt
+#     echo " --------- END   DIFFS  "
     
-done
+# done
 make clobber
 make clean
 # rm examples/*.txt

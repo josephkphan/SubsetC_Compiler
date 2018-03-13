@@ -336,8 +336,8 @@ public:
 class Break : public Statement {
 public:
     Break();
-    virtual void allocate(int &offset) const;
-    virtual void generate(); 
+    // virtual void allocate(int &offset) const;
+    // virtual void generate(); 
 };
 
 
