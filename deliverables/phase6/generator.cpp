@@ -20,10 +20,7 @@ using namespace std;
 
 static unsigned maxargs;
 int temp_offset;
-
-static Label *retlbl;
-
-std::vector<string> strs;
+static Label *return_label;
 vector<string> stringLabels;
 
 /*
@@ -41,12 +38,17 @@ ostream &operator <<(ostream &ostr, const Label &lbl){
 	return ostr << ".L" << lbl.number();
 }
 
+std::string IntToString (int number){
+  std::ostringstream oss;
+  oss<< number;
+  return oss.str();
+}
+
 void generator_debug(string message){
     // cout << "--" << message << endl;
 }
 
-string getTemp()
-{
+string getTemp(){
     generator_debug("Expression::generate()");
     stringstream ss;
     temp_offset -= 4;
@@ -66,11 +68,11 @@ void Identifier::generate(){
     stringstream ss;
 
 
-    if (_symbol->_offset != 0)
-	ss << _symbol->_offset << "(%ebp)";
-    else
-	ss << global_prefix << _symbol->name();
-
+    if (_symbol->_offset != 0){
+		ss << _symbol->_offset << "(%ebp)";
+	}else{
+		ss << global_prefix << _symbol->name();
+	}
     _operand = ss.str();
 }
 
@@ -138,8 +140,7 @@ void Call::generate()
  * memory, we just load it into %eax and then move %eax onto the stack.
  */
 
-void Call::generate()
-{
+void Call::generate(){
     unsigned numBytes = 0;
 	_operand = getTemp();
 
@@ -148,12 +149,11 @@ void Call::generate()
 		cout << "\tpushl\t" << _args[i] << endl;
 		numBytes += _args[i]->type().size();
     }
-
     cout << "\tcall\t" << global_prefix << _id->name() << endl;
 
-    if (numBytes > 0)
-	cout << "\taddl\t$" << numBytes << ", %esp" << endl;
-
+    if (numBytes > 0){
+		cout << "\taddl\t$" << numBytes << ", %esp" << endl;
+	}
     cout << "\tmovl\t%eax, " << _operand << endl;
 
 }
@@ -170,38 +170,27 @@ void Call::generate()
  *		we've written things, the right-side can be a variable too.
  */
 
-void Assignment::generate()
-{
-    // _left->generate();
-    // _right->generate();
-
-    // generator_debug("Assignment::generate()");
-    // cout << "\tmovl\t" << _right << ", %eax" << endl;
-    // cout << "\tmovl\t%eax, " << _left << endl;
-
-    	bool indirect;
+void Assignment::generate(){
+	bool indirect;
     _left->generate(indirect);
     _right->generate();
 
     cout << "\tmovl\t" << _right << ", %eax" << endl;
 
-	if(_left->type().size() == SIZEOF_INT)
-	{
-		if(indirect)
-		{
+	if(_left->type().size() == SIZEOF_INT){
+		if(indirect){
 			cout << "\tmovl\t" << _left << ", %ecx" << endl;
 			cout << "\tmovl\t%eax, (%ecx)" << endl;
+		}else {
+			cout << "\tmovl\t%eax, " << _left << endl;
 		}
-		else cout << "\tmovl\t%eax, " << _left << endl;
-	}
-	else
-	{
-		if(indirect)
-		{
+	}else{
+		if(indirect){
 			cout << "\tmovl\t" << _left << ", %ecx" << endl;
 			cout << "\tmovb\t%al, (%ecx)" << endl;
+		}else {
+			cout << "\tmovb\t%al, " << _left << endl;
 		}
-		else cout << "\tmovb\t%al, " << _left << endl;
 	}
 }
 
@@ -229,15 +218,13 @@ void Block::generate()
  *		body of the function, and the epilogue.
  */
 
-void Function::generate()
-{
+void Function::generate(){
+	return_label = new Label();
     int offset = 0;
 
-	retlbl = new Label();
-
-    /* Generate our prologue. */
-
-    allocate(offset);
+    // Prologue
+	allocate(offset);
+	generator_debug("PROLOGUE!!!");
     generator_debug("Function::generate() - 1");
     cout << global_prefix << _id->name() << ":" << endl;
     cout << "\tpushl\t%ebp" << endl;
@@ -245,26 +232,26 @@ void Function::generate()
     cout << "\tsubl\t$" << _id->name() << ".size, %esp" << endl;
 
 
-    /* Generate the body of this function. */
-
+   // Body
+	generator_debug("BODY!!!");
     maxargs = 0;
-	temp_offset = offset; //Store offset in temp_offset
+	temp_offset = offset; 
     _body->generate();
-	offset = temp_offset; //Restore offset from temp_offset
-
+	offset = temp_offset; 
     offset -= maxargs * SIZEOF_ARG;
 
     generator_debug("Function::generate() - 2");
-    while ((offset - PARAM_OFFSET) % STACK_ALIGNMENT)
-	offset --;
+    while ((offset - PARAM_OFFSET) % STACK_ALIGNMENT){
+		offset --;
+	}
+	cout << *return_label << ":" << endl; 
 
-	cout << *retlbl << ":" << endl; 
-    /* Generate our epilogue. */
-
+    // Epilogue
+	generator_debug("EPILOGUE!!!");
     cout << "\tmovl\t%ebp, %esp" << endl;
     cout << "\tpopl\t%ebp" << endl;
-    cout << "\tret" << endl << endl;
-
+	cout << "\tret" << endl << endl;
+	
     cout << "\t.globl\t" << global_prefix << _id->name() << endl;
     cout << "\t.set\t" << _id->name() << ".size, " << -offset << endl;
 
@@ -288,146 +275,48 @@ void generateGlobals(const Symbols &globals)
 		cout << ", " << globals[i]->type().alignment() << endl;
     }
 
-	for (unsigned i = 0; i < stringLabels.size(); i++)
-	{
+	for (unsigned i = 0; i < stringLabels.size(); i++){
 		cout << stringLabels[i] << endl;
 	}
 
 }
 
+//-------------------------  Generate String --------------------------- //
 
+void String::generate(){
+    stringstream lblstr, out;
+	Label string_label; 
+	lblstr << string_label;
+	out << lblstr.str() << ":\t.asciz\t" << _value;
+	stringLabels.push_back(out.str());
+	_operand = lblstr.str();
+}
 
-
-//-------------------------  New Stuff  ---------------------------//
-
-
-
-void Expression::generate(bool &indirect)
-{
+//-------------------------  Expression Functions  --------------------------- //
+void Expression::generate(bool &indirect){
     generator_debug("Expression::generate(bool &indirect)");
     indirect = false;
     generate();
 }
 
-void Expression::generate()
-{
+void Expression::generate(){
     generator_debug("Expression::generate()");
     cerr << "have not finished assignment" << endl;
 }
 
-void Dereference::generate()
-{	
+void Promote::generate(){
 	_expr->generate();
-	_operand = getTemp();
-	
-    generator_debug("Dereference::generate()");
-	cout << "\tmovl\t" << _expr << ", %eax" << endl;
-	
-	if(_type.size() == SIZEOF_CHAR) cout << "\tmovsbl\t(%eax), %eax" << endl;
-	else 							cout << "\tmovl\t(%eax), %eax" << endl;
-	
-	cout << "\tmovl\t%eax, " << _operand << endl;
+	_operand = getTemp();	
+
+    generator_debug("Promote::generate()");
+	cout << "\tmovsbl\t" << _expr << ", %eax" << endl; 
+	cout << "\tmovl\t%eax, " << _operand << endl; 
 }
 
-void Dereference::generate(bool &indirect)
-{
-    generator_debug("Dereference::generate()");
-	indirect = true; //Set indirect equal to true, since we're now dealing with a pointer
-	_expr->generate(); //Generate code for the sub-expression
-	_operand = _expr->_operand; 
-}
 
-/*
- * Function: Address::generate
- *
- * Description: Generate code for the address operator, and etc. recursively
- */
-void Address::generate()
-{
-	bool indirect;
-	_expr->generate(indirect);
-	if(indirect) _operand = _expr->_operand;
-	else
-	{
-		_operand = getTemp();
-        generator_debug("Address::generate()");
-		cout << "\tleal\t" << _expr << ", %eax" << endl;
-		cout << "\tmovl\t%eax, " << _operand << endl;
-	}
-}
+//------------ Expression - Binary Operators *, /, %, +, -  ------------- //
 
-/*
- * Function: Multiply::generate
- *
- * Description: Generate code for the multiplication operator, and etc. recursively
- */
-
-void Multiply::generate()
-{
-	_left->generate();
-	_right->generate();
-
-    generator_debug("Multiply::generate()");
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\timull\t" << _right << ", %eax" << endl;
-	
-	_operand = getTemp();
-
-	cout << "\tmovl\t%eax, " << _operand << endl;
-}
-
-/*
- * Function: Divide::generate
- *
- * Description: Generate code for the division operator, and etc. recursively
- */
-
-void Divide::generate()
-{
-	_left->generate();
-	_right->generate();
-
-    generator_debug("Divide::generate()");
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\tmovl\t" << _right << ", %ecx" << endl;
-	cout << "\tcltd\t" << endl;
-	cout << "\tidivl\t%ecx" << endl;
-
-	_operand = getTemp();
-
-	cout << "\tmovl\t%eax, " << _operand << endl; //%eax contains quotient
-}
-
-/*
- * Function: Remainder::generate
- *
- * Description: Generate code for the remainder operator, and etc. recursively
- */
-
-void Remainder::generate()
-{
-	_left->generate();
-	_right->generate();
-	
-    generator_debug("Remainder::generate()");
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\tmovl\t" << _right << ", %ecx" << endl;
-	cout << "\tcltd\t" << endl;
-	cout << "\tidivl\t%ecx" << endl;
-
-	_operand = getTemp();
-
-	cout << "\tmovl\t%edx, " << _operand << endl; //%edx contains remainder
-}
-
-/*
- * Function: Add::generate
- *
- * Description: Generate code for addition operator, and etc. recursively
- */
-
-void Add::generate()
-{
+void Add::generate(){
 	_left->generate();
 	_right->generate();
 
@@ -440,14 +329,7 @@ void Add::generate()
 	cout << "\tmovl\t%eax,"<< _operand << endl;
 }
 
-/*
- * Function: Subtract::generate
- *
- * Description: Generate code for subtraction operator, and etc. recursively
- */
-
-void Subtract::generate()
-{
+void Subtract::generate(){
     generator_debug("Subtract::generate()");
 	_left->generate();
 	_right->generate();
@@ -460,33 +342,45 @@ void Subtract::generate()
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: Negate::generate
- *
- * Description: Generate code for negation operator, and etc. recursively
- */
+void Multiply::generate(){
+	_left->generate();
+	_right->generate();
 
-void Negate::generate()
-{
-	_expr->generate();
-	
-    generator_debug("Negate::generate()");
-	cout << "\tmovl\t" << _expr << ", %eax" << endl;
-	cout << "\tnegl\t%eax" << endl;
-
+    generator_debug("Multiply::generate()");
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\timull\t" << _right << ", %eax" << endl;
 	_operand = getTemp();
-
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: Not::generate
- *
- * Description: Generate code for not operator, and etc. recursively
- */
+void Divide::generate(){
+	_left->generate();
+	_right->generate();
 
-void Not::generate()
-{
+    generator_debug("Divide::generate()");
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\tmovl\t" << _right << ", %ecx" << endl;
+	cout << "\tcltd\t" << endl;
+	cout << "\tidivl\t%ecx" << endl;
+	_operand = getTemp();
+	cout << "\tmovl\t%eax, " << _operand << endl; 
+}
+
+void Remainder::generate(){
+	_left->generate();
+	_right->generate();
+	
+    generator_debug("Remainder::generate()");
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\tmovl\t" << _right << ", %ecx" << endl;
+	cout << "\tcltd\t" << endl;
+	cout << "\tidivl\t%ecx" << endl;
+	_operand = getTemp();
+	cout << "\tmovl\t%edx, " << _operand << endl; 
+}
+
+//------------ Expression - Uniary Operators   ------------- //
+void Not::generate(){
 	_expr->generate();
 
     generator_debug("Not::generate() - 2");
@@ -499,35 +393,54 @@ void Not::generate()
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: LessThan::generate
- *
- * Description: Generate code for less-than operator, and etc. recursively
- */
+void Dereference::generate(){	
+	_expr->generate();
+	_operand = getTemp();
+	
+    generator_debug("Dereference::generate()");
+	cout << "\tmovl\t" << _expr << ", %eax" << endl;
+	
+	if(_type.size() == SIZEOF_CHAR){
+		cout << "\tmovsbl\t(%eax), %eax" << endl;
+	}else {
+		cout << "\tmovl\t(%eax), %eax" << endl;
+	}
+	
+	cout << "\tmovl\t%eax, " << _operand << endl;
+}
 
-void LessThan::generate()
-{
-	_left->generate();
-	_right->generate();
+void Address::generate(){
+	bool indirect;
+	_expr->generate(indirect);
+	if(indirect){ 
+		_operand = _expr->_operand;
+	}else{
+		_operand = getTemp();
+        generator_debug("Address::generate()");
+		cout << "\tleal\t" << _expr << ", %eax" << endl;
+		cout << "\tmovl\t%eax, " << _operand << endl;
+	}
+}
 
-    generator_debug("LessThan::generate() - 1");
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\tcmpl\t" << _right << ", %eax" << endl;
-	cout << "\tsetl\t%al" << endl;
-	cout << "\tmovzbl\t%al, %eax" << endl;
+void Dereference::generate(bool &indirect){
+    generator_debug("Dereference::generate()");
+	indirect = true;
+	_expr->generate(); 
+	_operand = _expr->_operand; 
+}
 
+void Negate::generate(){
+	_expr->generate();
+    generator_debug("Negate::generate()");
+	cout << "\tmovl\t" << _expr << ", %eax" << endl;
+	cout << "\tnegl\t%eax" << endl;
 	_operand = getTemp();
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: GreaterThan::generate
- *
- * Description: Generate code for greater-than operator, and etc. recursively
- */
+//------------ Expression - Comparison Operators  >, >=, <, <=  ------------- //
 
-void GreaterThan::generate()
-{
+void GreaterThan::generate(){
 	_left->generate();
 	_right->generate();
 
@@ -541,35 +454,7 @@ void GreaterThan::generate()
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: LessOrEqual::generate
- *
- * Description: Generate code for less-than-or-equal operator, and etc. recursively
- */
-
-void LessOrEqual::generate()
-{
-    generator_debug("LessOrEqual::generate() - 1");
-	_left->generate();
-	_right->generate();
-
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\tcmpl\t" << _right << ", %eax" << endl;
-	cout << "\tsetle\t%al" << endl;
-	cout << "\tmovzbl\t%al, %eax" << endl;
-
- 	_operand = getTemp();
-	cout << "\tmovl\t%eax, " << _operand << endl;
-}
-
-/*
- * Function: GreaterOrEqual::generate
- *
- * Description: Generate code for greater-than-or-equal operator, and etc. recursively
- */
-
-void GreaterOrEqual::generate()
-{
+void GreaterOrEqual::generate(){
 	_left->generate();
 	_right->generate();
 
@@ -583,14 +468,50 @@ void GreaterOrEqual::generate()
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: Equal::generate
- *
- * Description: Generate code for equality operator, and etc. recursively
- */
+void LessThan::generate(){
+	_left->generate();
+	_right->generate();
 
-void Equal::generate()
-{
+    generator_debug("LessThan::generate() - 1");
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\tcmpl\t" << _right << ", %eax" << endl;
+	cout << "\tsetl\t%al" << endl;
+	cout << "\tmovzbl\t%al, %eax" << endl;
+
+	_operand = getTemp();
+	cout << "\tmovl\t%eax, " << _operand << endl;
+}
+
+void LessOrEqual::generate(){
+    generator_debug("LessOrEqual::generate() - 1");
+	_left->generate();
+	_right->generate();
+
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\tcmpl\t" << _right << ", %eax" << endl;
+	cout << "\tsetle\t%al" << endl;
+	cout << "\tmovzbl\t%al, %eax" << endl;
+
+ 	_operand = getTemp();
+	cout << "\tmovl\t%eax, " << _operand << endl;
+}
+
+//------------ Expression - Equality Operators  =, != ------------- //
+void NotEqual::generate(){
+	_left->generate();
+	_right->generate();
+
+    generator_debug("NotEqual::generate()");
+	cout << "\tmovl\t" << _left << ", %eax" << endl;
+	cout << "\tcmpl\t" << _right << ", %eax" << endl;
+	cout << "\tsetne\t%al" << endl;
+	cout << "\tmovzbl\t%al, %eax" << endl;
+	
+	_operand = getTemp();
+	cout << "\tmovl\t%eax, " << _operand << endl;
+}
+
+void Equal::generate(){
 	_left->generate();
 	_right->generate();
 
@@ -603,218 +524,107 @@ void Equal::generate()
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
-/*
- * Function: Equal::generate
- *
- * Description: Generate code for equality operator, and etc. recursively
- */
-
-void NotEqual::generate()
-{
+//------------ Expression - Comparison Operators ||, && ------------- //
+void LogicalAnd::generate(){
 	_left->generate();
-	_right->generate();
+	Label and_label = Label();
 
-
-    generator_debug("NotEqual::generate()");
-	cout << "\tmovl\t" << _left << ", %eax" << endl;
-	cout << "\tcmpl\t" << _right << ", %eax" << endl;
-	cout << "\tsetne\t%al" << endl;
-	cout << "\tmovzbl\t%al, %eax" << endl;
+    generator_debug("LogicalAnd::generate() - 1");
+	cout << "movl\t" << _left << ",%eax" << endl;
+	cout << "cmpl\t$0,%eax" << endl;
+	cout << "jne\t" << and_label << endl; 
 	
+	_right->generate();
+    generator_debug("LogicalAnd::generate() - 2");
+	cout << "movl\t" << _right << ",%eax" << endl;
+	cout << "cmpl\t$0,%eax" << endl;
+	cout << and_label << ":" << endl;
 	_operand = getTemp();
-	cout << "\tmovl\t%eax, " << _operand << endl;
+	cout << "\tsetne\t%al" << endl;
+	cout << "\tmovzbl\t%al,%eax" << endl;
+	cout << "\tmovl\t%eax," << _operand << endl;
 }
 
-/*
- * Function: LogicalOr::generate
- *
- * Description: Generate code for logical-or operator, and etc. recursively
- */
-
-void LogicalOr::generate()
-{
+void LogicalOr::generate(){
 	_left->generate();
+	Label or_label = Label();
 
-	Label orlbl = Label();
 	generator_debug("LogicalOr::generate() - 1");
 	cout << "\tmovl\t" << _left << ",%eax" << endl;
 	cout << "\tcmpl\t$0,%eax" << endl;
-	cout << "\tjne\t" << orlbl << endl;
+	cout << "\tjne\t" << or_label << endl;
 	
 	_right->generate();
     generator_debug("LogicalOr::generate() - 2");
 	cout << "\tmovl\t" << _right << ",%eax" << endl;
 	cout << "\tcmpl\t$0,%eax" << endl;
 
-	
-	cout << orlbl << ":" << endl; 
+	cout << or_label << ":" << endl; 
     _operand = getTemp();
     generator_debug("LogicalOr::generate() - 3");
 	cout << "\tsetne\t%al" << endl;
 	cout << "\tmovzbl\t%al,%eax" << endl;
 	cout << "\tmovl\t%eax," << _operand << endl;
-	
 }
 
-/*
- * Function: LogicalAnd::generate
- *
- * Description: Generate code for logical-and operator, and etc. recursively
- */
-
-void LogicalAnd::generate()
-{
-	_left->generate();
-
-	Label andlbl = Label();
-
-    generator_debug("LogicalAnd::generate() - 1");
-	cout << "movl\t" << _left << ",%eax" << endl;
-	cout << "cmpl\t$0,%eax" << endl;
-	cout << "jne\t" << andlbl << endl; 
-	
-	_right->generate();
-    generator_debug("LogicalAnd::generate() - 2");
-	cout << "movl\t" << _right << ",%eax" << endl;
-	cout << "cmpl\t$0,%eax" << endl;
-	
-	
-	cout << andlbl << ":" << endl;
-	_operand = getTemp();
-	cout << "\tsetne\t%al" << endl;
-	cout << "\tmovzbl\t%al,%eax" << endl;
-	cout << "\tmovl\t%eax," << _operand << endl;
-
-}
-
-/*
- * Function: Return::generate
- *
- * Description: Generate code for return statements, and etc. recursively
- */
-void Return::generate(){
-	_expr->generate();
-	
-    generator_debug("Return::generate()");
-	cout << "\tmovl\t" << _expr << ", %eax" << endl; //Store return value in %eax
-	cout << "\tjmp\t\t" << *retlbl << endl; //Jump to return label
-}
-
-/*
- * Function: Promote::generate
- *
- * Description: Generate code for promotions
- */
-void Promote::generate(){
-	_expr->generate();
-	_operand = getTemp();	
-    generator_debug("Promote::generate()");
-	//cout << "\tmovsbl\t" << _expr << ", " << _operand << endl; //One-line version
-	cout << "\tmovsbl\t" << _expr << ", %eax" << endl; //Sign-extend expression
-	cout << "\tmovl\t%eax, " << _operand << endl; //Store result in temp
-}
-
-/*
- * Function: While::generate
- *
- * Description: Generate code for while statements, and etc. recursively
- */
+//------------ For Loops and While Loops ------------- //
 void While::generate(){
-	//Loop label
-	Label whileLbl;
-	cout << whileLbl << ":" << endl;
+	Label while_label, exit_while_label;
+	cout << while_label << ":" << endl;
 
-	//Expression code gen
 	_expr->generate();
-
-    
-	//Testing and expression
-	Label exitLbl;
     generator_debug("While::generate() - 1");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
 	cout << "\tcmpl\t$0, %eax" << endl;
-	cout << "\tje\t\t" << exitLbl << endl;
+	cout << "\tje\t\t" << exit_while_label << endl;
 
-	//Statement code gen
 	_stmt->generate();
-
-    //Either repeat the loop or exit
     generator_debug("While::generate() - 2");
-	cout << "\tjmp\t\t" << whileLbl << endl;
-	cout << exitLbl << ":" << endl;
+	cout << "\tjmp\t\t" << while_label << endl;
+	cout << exit_while_label << ":" << endl;
 }
 
-/*
- * Function: For::generate
- *
- * Description: Generate code for for statements, and etc. recursively
- */
 void For::generate(){
-	//Initial statement code gen
+	Label for_label, exit_for_label;
+
 	_init->generate();
-	
-	//Loop label
-	Label forLbl;
-	cout << forLbl << ":" << endl;
+	cout << for_label << ":" << endl;
 
-	//Expression code gen
 	_expr->generate();
-
-	//Testing expression
-	Label exitLbl;
     generator_debug("For::generate() -1");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
 	cout << "\tcmpl\t$0, %eax" << endl;
-	cout << "\tje\t\t" << exitLbl << endl;
+	cout << "\tje\t\t" << exit_for_label << endl;
 
-	//Loop statement code gen
 	_stmt->generate();
-
-	//Increment statement code gen
 	_incr->generate();
-
     generator_debug("For::generate() -2");
-	//Either repeat the loop or exit
-	cout << "\tjmp\t\t" << forLbl << endl;
-	cout << exitLbl << ":" << endl;
+	cout << "\tjmp\t\t" << for_label << endl;
+	cout << exit_for_label << ":" << endl;
 }
+//------------ If Statements ------------- //
 
-/*
- * Function: If::generate
- *
- * Description: Generate code for if statements, and etc. recursively
- */
 void If::generate(){
     generator_debug("If::generate()");
-	//Expression code gen
 	_expr->generate();
+	Label if_label, else_label;
 
-	//If label
-	Label ifLbl;
-
-	//Testing expression
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
 	cout << "\tcmpl\t$0, %eax" << endl;
-	cout << "\tje\t\t" << ifLbl << endl;
+	cout << "\tje\t\t" << if_label << endl;
 
 	_thenStmt->generate();
-	
-	//Exit label
-	Label exitLbl;
-	
-	//Check for absence of else statement
-	if( _elseStmt==NULL ) cout << ifLbl << ":" << endl;
-	
-	else 
-	{
-		cout << "\tjmp\t\t" << exitLbl << endl;
-		cout << ifLbl << ":" << endl;
+	if( _elseStmt==NULL ){ 
+		cout << if_label << ":" << endl;
+	}else {
+		cout << "\tjmp\t\t" << else_label << endl;
+		cout << if_label << ":" << endl;
 		_elseStmt->generate();
 	}
-
-	cout << exitLbl << ":" << endl;	
+	cout << else_label << ":" << endl;	
 }
 
+//------------ Break Statement ------------- //
 
 void Break::generate(){	
     // generator_debug("Break::generate()");
@@ -826,30 +636,13 @@ void Break::allocate(int &offset) const {
 //     cout << "IN BREAK!!!!!!" << endl;
 }
 
-
-void String::generate(){
-    /*
-    print this: .l3:    .asciz "%d\n"
-    in use:     leal    .l3, %eax
-    */
-
-    // generator_debug("String::generate()");
-    // cout << "#STRING" << endl;
-    // stringstream ss;
-    // Label *lbl = new Label();
-    // ss << *lbl;
-    // _operand = ss.str();
-    // ss << ":\t.asciz " << _value << endl;
-    // strs.push_back(ss.str());   
-
-    stringstream lblstr, out;
+//------------ Return  Statement ------------- //
+void Return::generate(){
+	_expr->generate();
 	
-	Label stringlbl; //Does this increment the counter?
-	lblstr << stringlbl;
-
-	out << lblstr.str() << ":\t.asciz\t" << _value;
-	
-	stringLabels.push_back(out.str());
-
-	_operand = lblstr.str();
+    generator_debug("Return::generate()");
+	cout << "\tmovl\t" << _expr << ", %eax" << endl; 
+	cout << "\tjmp\t\t" << *return_label << endl;
 }
+
+
