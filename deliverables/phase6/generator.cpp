@@ -24,6 +24,7 @@ int temp_offset;
 static Label *retlbl;
 
 std::vector<string> strs;
+vector<string> stringLabels;
 
 /*
  * Function:	operator <<
@@ -139,39 +140,22 @@ void Call::generate()
 
 void Call::generate()
 {
-    // unsigned numBytes = 0;
-	// _operand = getTemp();
-
-    // for (int i = _args.size() - 1; i >= 0; i --) {
-	// 	_args[i]->generate();
-	// 	cout << "\tpushl\t" << _args[i] << endl;
-	// 	numBytes += _args[i]->type().size();
-    // }
-
-    // cout << "\tcall\t" << global_prefix << _id->name() << endl;
-
-    // if (numBytes > 0)
-	// cout << "\taddl\t$" << numBytes << ", %esp" << endl;
-
-    // cout << "\tmovl\t%eax, " << _operand << endl;
-    
-    //     unsigned numBytes = 0;
-
+    unsigned numBytes = 0;
+	_operand = getTemp();
 
     for (int i = _args.size() - 1; i >= 0; i --) {
-	_args[i]->generate();
-	cout << "\tpushl\t" << _args[i] << endl;
-	numBytes += _args[i]->type().size();
+		_args[i]->generate();
+		cout << "\tpushl\t" << _args[i] << endl;
+		numBytes += _args[i]->type().size();
     }
 
     cout << "\tcall\t" << global_prefix << _id->name() << endl;
 
     if (numBytes > 0)
-    {
 	cout << "\taddl\t$" << numBytes << ", %esp" << endl;
-    }
-    _operand = getTemp();
+
     cout << "\tmovl\t%eax, " << _operand << endl;
+
 }
 
 # endif
@@ -296,15 +280,19 @@ void Function::generate()
 
 void generateGlobals(const Symbols &globals)
 {
-    generator_debug("generateGlobals()");
-    if (globals.size() > 0)
-	cout << "\t.data" << endl;
+    if (globals.size() > 0) cout << "\t.data" << endl;
 
     for (unsigned i = 0; i < globals.size(); i ++) {
-	cout << "\t.comm\t" << global_prefix << globals[i]->name();
-	cout << ", " << globals[i]->type().size();
-	cout << ", " << globals[i]->type().alignment() << endl;
+		cout << "\t.comm\t" << global_prefix << globals[i]->name();
+		cout << ", " << globals[i]->type().size();
+		cout << ", " << globals[i]->type().alignment() << endl;
     }
+
+	for (unsigned i = 0; i < stringLabels.size(); i++)
+	{
+		cout << stringLabels[i] << endl;
+	}
+
 }
 
 
@@ -854,14 +842,14 @@ void String::generate(){
     // ss << ":\t.asciz " << _value << endl;
     // strs.push_back(ss.str());   
 
-    // stringstream lblstr, out;
+    stringstream lblstr, out;
 	
-	// Label stringlbl; //Does this increment the counter?
-	// lblstr << stringlbl;
+	Label stringlbl; //Does this increment the counter?
+	lblstr << stringlbl;
 
-	// out << lblstr.str() << ":\t.asciz\t" << _value;
+	out << lblstr.str() << ":\t.asciz\t" << _value;
 	
-	// stringLabels.push_back(out.str());
+	stringLabels.push_back(out.str());
 
-	// _operand = lblstr.str();
+	_operand = lblstr.str();
 }
