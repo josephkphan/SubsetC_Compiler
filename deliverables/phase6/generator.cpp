@@ -48,12 +48,13 @@ void generator_debug(string message){
     // cout << "--" << message << endl;
 }
 
-string getTemp(){
+void assignTemp(Expression* expr){
     generator_debug("Expression::generate()");
     stringstream ss;
-    temp_offset -= 4;
+	//temp_offset -= 4;
+	temp_offset -= expr->type().size();
     ss << temp_offset << "(%ebp)";
-    return ss.str();
+    expr->_operand = ss.str();
 }
 
 /*
@@ -66,7 +67,6 @@ string getTemp(){
 void Identifier::generate(){
     generator_debug("Identifier::generate()");
     stringstream ss;
-
 
     if (_symbol->_offset != 0){
 		ss << _symbol->_offset << "(%ebp)";
@@ -105,7 +105,7 @@ void Number::generate(){
 void Call::generate()
 {
     unsigned numBytes = 0;
-	_operand = getTemp();
+	assignTemp(this);
 
     for (int i = _args.size() - 1; i >= 0; i --) {
 		_args[i]->generate();
@@ -142,7 +142,7 @@ void Call::generate()
 
 void Call::generate(){
     unsigned numBytes = 0;
-	_operand = getTemp();
+	assignTemp(this);
 
     for (int i = _args.size() - 1; i >= 0; i --) {
 		_args[i]->generate();
@@ -265,9 +265,10 @@ void Function::generate(){
  * Description:	Generate code for any global variable declarations.
  */
 
-void generateGlobals(const Symbols &globals)
-{
-    if (globals.size() > 0) cout << "\t.data" << endl;
+void generateGlobals(const Symbols &globals){
+    if (globals.size() > 0){ 
+		cout << "\t.data" << endl;
+	}
 
     for (unsigned i = 0; i < globals.size(); i ++) {
 		cout << "\t.comm\t" << global_prefix << globals[i]->name();
@@ -284,12 +285,11 @@ void generateGlobals(const Symbols &globals)
 //-------------------------  Generate String --------------------------- //
 
 void String::generate(){
-    stringstream lblstr, out;
 	Label string_label; 
-	lblstr << string_label;
-	out << lblstr.str() << ":\t.asciz\t" << _value;
-	stringLabels.push_back(out.str());
-	_operand = lblstr.str();
+    stringstream ss_label;
+	ss_label << string_label;
+	stringLabels.push_back(ss_label.str() +":\t.asciz\t" + _value);
+	_operand = ss_label.str();
 }
 
 //-------------------------  Expression Functions  --------------------------- //
@@ -306,13 +306,12 @@ void Expression::generate(){
 
 void Promote::generate(){
 	_expr->generate();
-	_operand = getTemp();	
+	assignTemp(this);	
 
     generator_debug("Promote::generate()");
 	cout << "\tmovsbl\t" << _expr << ", %eax" << endl; 
 	cout << "\tmovl\t%eax, " << _operand << endl; 
 }
-
 
 //------------ Expression - Binary Operators *, /, %, +, -  ------------- //
 
@@ -324,7 +323,7 @@ void Add::generate(){
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\taddl\t" << _right << ", %eax" << endl;
 	
-	_operand = getTemp();
+	assignTemp(this);
 	
 	cout << "\tmovl\t%eax,"<< _operand << endl;
 }
@@ -337,7 +336,7 @@ void Subtract::generate(){
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\tsubl\t" << _right << ", %eax" << endl;
 
-	_operand = getTemp();
+	assignTemp(this);
 
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
@@ -349,7 +348,7 @@ void Multiply::generate(){
     generator_debug("Multiply::generate()");
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\timull\t" << _right << ", %eax" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -362,7 +361,7 @@ void Divide::generate(){
 	cout << "\tmovl\t" << _right << ", %ecx" << endl;
 	cout << "\tcltd\t" << endl;
 	cout << "\tidivl\t%ecx" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl; 
 }
 
@@ -375,7 +374,7 @@ void Remainder::generate(){
 	cout << "\tmovl\t" << _right << ", %ecx" << endl;
 	cout << "\tcltd\t" << endl;
 	cout << "\tidivl\t%ecx" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%edx, " << _operand << endl; 
 }
 
@@ -389,13 +388,13 @@ void Not::generate(){
 	cout << "\tsete\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
 void Dereference::generate(){	
 	_expr->generate();
-	_operand = getTemp();
+	assignTemp(this);
 	
     generator_debug("Dereference::generate()");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
@@ -415,7 +414,7 @@ void Address::generate(){
 	if(indirect){ 
 		_operand = _expr->_operand;
 	}else{
-		_operand = getTemp();
+		assignTemp(this);
         generator_debug("Address::generate()");
 		cout << "\tleal\t" << _expr << ", %eax" << endl;
 		cout << "\tmovl\t%eax, " << _operand << endl;
@@ -434,7 +433,7 @@ void Negate::generate(){
     generator_debug("Negate::generate()");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
 	cout << "\tnegl\t%eax" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -450,7 +449,7 @@ void GreaterThan::generate(){
     cout << "\tsetg\t%al" << endl;
     cout << "\tmovzbl\t%al, %eax" << endl;
 
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -464,7 +463,7 @@ void GreaterOrEqual::generate(){
 	cout << "\tsetge\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -478,7 +477,7 @@ void LessThan::generate(){
 	cout << "\tsetl\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -492,7 +491,7 @@ void LessOrEqual::generate(){
 	cout << "\tsetle\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 
- 	_operand = getTemp();
+ 	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -507,7 +506,7 @@ void NotEqual::generate(){
 	cout << "\tsetne\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 	
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -520,7 +519,7 @@ void Equal::generate(){
 	cout << "\tcmpl\t" << _right << ", %eax" << endl;
 	cout << "\tsete\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -539,7 +538,7 @@ void LogicalAnd::generate(){
 	cout << "movl\t" << _right << ",%eax" << endl;
 	cout << "cmpl\t$0,%eax" << endl;
 	cout << and_label << ":" << endl;
-	_operand = getTemp();
+	assignTemp(this);
 	cout << "\tsetne\t%al" << endl;
 	cout << "\tmovzbl\t%al,%eax" << endl;
 	cout << "\tmovl\t%eax," << _operand << endl;
@@ -560,7 +559,7 @@ void LogicalOr::generate(){
 	cout << "\tcmpl\t$0,%eax" << endl;
 
 	cout << or_label << ":" << endl; 
-    _operand = getTemp();
+    assignTemp(this);
     generator_debug("LogicalOr::generate() - 3");
 	cout << "\tsetne\t%al" << endl;
 	cout << "\tmovzbl\t%al,%eax" << endl;

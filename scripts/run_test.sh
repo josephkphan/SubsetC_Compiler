@@ -10,7 +10,9 @@ do
     echo -e "================= Getting Logs ${filename} ===================="
     # ./scc < ${filename}.c > ${filename}OUT.txt 2>&1
     # ./scc < ${filename}.c 2> ${filename}ERROR.txt 
-    ./scc < ${filename}.c > ${filename}TEST.txt 
+    ./scc < ${filename}.c > ${filename}.s
+    gcc -m32 ${filename}.s -o ${filename}.run
+
 done
 
 # echo "================= Getting Diffs ===================="
