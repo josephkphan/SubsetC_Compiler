@@ -12,6 +12,7 @@ do
     # ./scc < ${filename}.c 2> ${filename}ERROR.txt 
     ./scc < ${filename}.c > ${filename}.s
     gcc -m32 ${filename}.s -o ${filename}.run
+    ./${filename}.run < ${filename}.in
 
 done
 
