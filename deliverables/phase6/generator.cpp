@@ -21,6 +21,7 @@ using namespace std;
 static unsigned maxargs;
 int temp_offset;
 static Label *return_label;
+static vector<Label> loop_labels;
 vector<string> stringLabels;
 
 /*
@@ -115,10 +116,10 @@ void Call::generate()
 
     cout << "\tcall\t" << global_prefix << _id->name() << endl;
 
+	cout << "\tmovl\t%eax, " << _operand << endl;
     if (numBytes > 0)
 	cout << "\taddl\t$" << numBytes << ", %esp" << endl;
 
-	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
 
@@ -140,22 +141,18 @@ void Call::generate()
  * memory, we just load it into %eax and then move %eax onto the stack.
  */
 
-void Call::generate(){
-    unsigned numBytes = 0;
-	assignTemp(this);
+void Call::generate()
+{
+	if (_args.size() > maxargs)
+		maxargs = _args.size();
 
-    for (int i = _args.size() - 1; i >= 0; i --) {
+	for (int i = _args.size() - 1; i >= 0; i --) {
 		_args[i]->generate();
-		cout << "\tpushl\t" << _args[i] << endl;
-		numBytes += _args[i]->type().size();
-    }
-    cout << "\tcall\t" << global_prefix << _id->name() << endl;
-
-    if (numBytes > 0){
-		cout << "\taddl\t$" << numBytes << ", %esp" << endl;
+		cout << "\tmovl\t" << _args[i] << ", %eax" << endl;
+		cout << "\tmovl\t%eax, " << i * SIZEOF_ARG << "(%esp)" << endl;
 	}
-    cout << "\tmovl\t%eax, " << _operand << endl;
 
+	cout << "\tcall\t" << global_prefix << _id->name() << endl;
 }
 
 # endif
@@ -172,8 +169,8 @@ void Call::generate(){
 
 void Assignment::generate(){
 	bool indirect;
-    _left->generate(indirect);
     _right->generate();
+    _left->generate(indirect);
 
     cout << "\tmovl\t" << _right << ", %eax" << endl;
 
@@ -308,9 +305,12 @@ void Promote::generate(){
 	_expr->generate();
 	assignTemp(this);	
 
-    generator_debug("Promote::generate()");
-	cout << "\tmovsbl\t" << _expr << ", %eax" << endl; 
-	cout << "\tmovl\t%eax, " << _operand << endl; 
+	generator_debug("Promote::generate()");
+	
+	cout << "\tmovb\t" << _expr << ", %al" << endl;
+	cout << "\tmovsbl\t%al, %eax" << endl;
+	cout << "\tmovl\t%eax, " << this << endl;
+
 }
 
 //------------ Expression - Binary Operators *, /, %, +, -  ------------- //
@@ -318,13 +318,11 @@ void Promote::generate(){
 void Add::generate(){
 	_left->generate();
 	_right->generate();
+	assignTemp(this);
 
     generator_debug("Add::generate()");
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\taddl\t" << _right << ", %eax" << endl;
-	
-	assignTemp(this);
-	
 	cout << "\tmovl\t%eax,"<< _operand << endl;
 }
 
@@ -332,55 +330,54 @@ void Subtract::generate(){
     generator_debug("Subtract::generate()");
 	_left->generate();
 	_right->generate();
+	assignTemp(this);
 
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\tsubl\t" << _right << ", %eax" << endl;
-
-	assignTemp(this);
-
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
 void Multiply::generate(){
 	_left->generate();
 	_right->generate();
+	assignTemp(this);
 
     generator_debug("Multiply::generate()");
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\timull\t" << _right << ", %eax" << endl;
-	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
 void Divide::generate(){
 	_left->generate();
 	_right->generate();
+	assignTemp(this);
 
     generator_debug("Divide::generate()");
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\tmovl\t" << _right << ", %ecx" << endl;
 	cout << "\tcltd\t" << endl;
 	cout << "\tidivl\t%ecx" << endl;
-	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl; 
 }
 
 void Remainder::generate(){
 	_left->generate();
 	_right->generate();
+	assignTemp(this);
 	
     generator_debug("Remainder::generate()");
 	cout << "\tmovl\t" << _left << ", %eax" << endl;
 	cout << "\tmovl\t" << _right << ", %ecx" << endl;
 	cout << "\tcltd\t" << endl;
 	cout << "\tidivl\t%ecx" << endl;
-	assignTemp(this);
 	cout << "\tmovl\t%edx, " << _operand << endl; 
 }
 
 //------------ Expression - Uniary Operators   ------------- //
 void Not::generate(){
 	_expr->generate();
+	assignTemp(this);
 
     generator_debug("Not::generate() - 2");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
@@ -388,7 +385,6 @@ void Not::generate(){
 	cout << "\tsete\t%al" << endl;
 	cout << "\tmovzbl\t%al, %eax" << endl;
 
-	assignTemp(this);
 	cout << "\tmovl\t%eax, " << _operand << endl;
 }
 
@@ -531,7 +527,7 @@ void LogicalAnd::generate(){
     generator_debug("LogicalAnd::generate() - 1");
 	cout << "movl\t" << _left << ",%eax" << endl;
 	cout << "cmpl\t$0,%eax" << endl;
-	cout << "jne\t" << and_label << endl; 
+	cout << "je\t" << and_label << endl; 
 	
 	_right->generate();
     generator_debug("LogicalAnd::generate() - 2");
@@ -569,8 +565,9 @@ void LogicalOr::generate(){
 //------------ For Loops and While Loops ------------- //
 void While::generate(){
 	Label while_label, exit_while_label;
-	cout << while_label << ":" << endl;
+	loop_labels.push_back(exit_while_label);
 
+	cout << while_label << ":" << endl;
 	_expr->generate();
     generator_debug("While::generate() - 1");
 	cout << "\tmovl\t" << _expr << ", %eax" << endl;
@@ -581,10 +578,12 @@ void While::generate(){
     generator_debug("While::generate() - 2");
 	cout << "\tjmp\t\t" << while_label << endl;
 	cout << exit_while_label << ":" << endl;
+	loop_labels.pop_back();
 }
 
 void For::generate(){
 	Label for_label, exit_for_label;
+	loop_labels.push_back(exit_for_label);
 
 	_init->generate();
 	cout << for_label << ":" << endl;
@@ -600,6 +599,8 @@ void For::generate(){
     generator_debug("For::generate() -2");
 	cout << "\tjmp\t\t" << for_label << endl;
 	cout << exit_for_label << ":" << endl;
+	loop_labels.pop_back();
+	
 }
 //------------ If Statements ------------- //
 
@@ -626,13 +627,9 @@ void If::generate(){
 //------------ Break Statement ------------- //
 
 void Break::generate(){	
-    // generator_debug("Break::generate()");
+	generator_debug("Break::generate()");
+	cout << "\tjmp\t\t" << loop_labels.back() << endl;
     // cout << "IN BREAK!!!!!!" << endl;
-}
-
-void Break::allocate(int &offset) const {
-//     generator_debug("Break::allocate(int &offset)");
-//     cout << "IN BREAK!!!!!!" << endl;
 }
 
 //------------ Return  Statement ------------- //

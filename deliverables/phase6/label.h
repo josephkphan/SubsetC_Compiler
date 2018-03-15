@@ -3,7 +3,7 @@
 # define LABEL_H
 
 
-struct Label {
+class Label {
     static unsigned _counter;
     unsigned _number;
 
